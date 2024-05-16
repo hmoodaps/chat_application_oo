@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "706942053414",
+    "project_id": "mychatapp-feba7",
+    "storage_bucket": "mychatapp-feba7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706942053414:android:2f10ecb094586976674ae7",
+        "android_client_info": {
+          "package_name": "com.example.chat_application"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "706942053414-bjepa4bsq8jr1648ncaptq7553n44ut2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2Bt4xsUF4wavuchQFXIfytIUOCiXYO38"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "706942053414-bjepa4bsq8jr1648ncaptq7553n44ut2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "706942053414-777h3snum5v9tjiq3nolrb4aij494sjp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mychatapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
