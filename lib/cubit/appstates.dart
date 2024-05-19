@@ -38,10 +38,23 @@ class IsTheFirstTime extends AppState{}
 class CheckUserDataExistence extends AppState{}
 class GetDataState extends AppState{}
 class DataLoadedState extends AppState{}
+class GetBackGroundPhotoSuccess extends AppState{}
+class GetBackGroundPhotoFailed extends AppState{}
+class GetProfileImageSuccess extends AppState{}
+class GetProfileImageFailed extends AppState{}
+class UpdatingProfileData extends AppState{}
 class ErrorState extends AppState{
   String error ;
   ErrorState(this.error);
 }
+class GetPostPhotoSuccess extends AppState{}
+class GetPostPhotoFailed extends AppState{}
+class CreatingPost extends AppState{}
+class DeletePhotoFromThePost extends AppState{}
+class UploadPostPhoto extends AppState{}
+class PostCreatedSuccessfully extends AppState{}
+class PostCreatedFailed extends AppState{}
+
 
 
 

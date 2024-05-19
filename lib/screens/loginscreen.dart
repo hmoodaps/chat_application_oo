@@ -53,7 +53,7 @@ class Login extends StatelessWidget {
                       prefixIcon: const Icon(IconlyBroken.message,
                           color: Color(0xFF7FFFD4)),
                       defaultBorderColor: const Color(0xFF7FFFD4),
-                      focusedBorderColor: Colors.purple,
+                      focusedBorderColor: defaultPurpleColor,
                       borderColorOnNotFocus: const Color(0xFF7FFFD4),
                       maxLength: 50,
                       borderRadius: const BorderRadius.only(
@@ -90,7 +90,7 @@ class Login extends StatelessWidget {
                         color: Color(0xFF7FFFD4),
                       ),
                       defaultBorderColor: const Color(0xFF7FFFD4),
-                      focusedBorderColor: Colors.purple,
+                      focusedBorderColor: defaultPurpleColor,
                       borderColorOnNotFocus: const Color(0xFF7FFFD4),
                       maxLength: 50,
                       borderRadius: const BorderRadius.only(
@@ -142,10 +142,10 @@ class Login extends StatelessWidget {
                         },
                         child: ShimmerEffect(
                           baseColor: const Color(0xFF40E0D0),
-                          highlightColor: Colors.purple,
+                          highlightColor: defaultPurpleColor,
                           child: Ink(
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.only(
+                            decoration:  BoxDecoration(
+                              borderRadius:const BorderRadius.only(
                                 topLeft: Radius.circular(20),
                                 bottomLeft: Radius.circular(200),
                                 topRight: Radius.circular(200),
@@ -155,8 +155,8 @@ class Login extends StatelessWidget {
                                 begin: Alignment.centerRight,
                                 end: Alignment.centerLeft,
                                 colors: [
-                                  Colors.purple,
-                                  Color(0xFF40E0D0),
+                                  defaultPurpleColor,
+                                  const Color(0xFF40E0D0),
                                 ],
                               ),
                             ),

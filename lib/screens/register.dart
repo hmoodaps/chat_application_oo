@@ -49,7 +49,7 @@ class Register extends StatelessWidget {
                             color: Color(0xFF7FFFD4),
                           ),
                           defaultBorderColor: const Color(0xFF7FFFD4),
-                          focusedBorderColor: Colors.purple,
+                          focusedBorderColor: defaultPurpleColor,
                           borderColorOnNotFocus: const Color(0xFF7FFFD4),
                           maxLength: 50,
                           borderRadius: const BorderRadius.only(
@@ -86,7 +86,7 @@ class Register extends StatelessWidget {
                             color: Color(0xFF7FFFD4),
                           ),
                           defaultBorderColor: const Color(0xFF7FFFD4),
-                          focusedBorderColor: Colors.purple,
+                          focusedBorderColor: defaultPurpleColor,
                           borderColorOnNotFocus: const Color(0xFF7FFFD4),
                           maxLength: 50,
                           borderRadius: const BorderRadius.only(
@@ -123,7 +123,7 @@ class Register extends StatelessWidget {
                             color: Color(0xFF7FFFD4),
                           ),
                           defaultBorderColor: const Color(0xFF7FFFD4),
-                          focusedBorderColor: Colors.purple,
+                          focusedBorderColor: defaultPurpleColor,
                           borderColorOnNotFocus: const Color(0xFF7FFFD4),
                           maxLength: 50,
                           borderRadius: const BorderRadius.only(
@@ -160,7 +160,7 @@ class Register extends StatelessWidget {
                             color: Color(0xFF7FFFD4),
                           ),
                           defaultBorderColor: const Color(0xFF7FFFD4),
-                          focusedBorderColor: Colors.purple,
+                          focusedBorderColor: defaultPurpleColor,
                           borderColorOnNotFocus: const Color(0xFF7FFFD4),
                           maxLength: 50,
                           borderRadius: const BorderRadius.only(
@@ -215,10 +215,10 @@ class Register extends StatelessWidget {
                             },
                             child: ShimmerEffect(
                               baseColor: const Color(0xFF40E0D0),
-                              highlightColor: Colors.purple,
+                              highlightColor: defaultPurpleColor,
                               child: Ink(
-                                decoration: const BoxDecoration(
-                                  borderRadius: BorderRadius.only(
+                                decoration:  BoxDecoration(
+                                  borderRadius:const BorderRadius.only(
                                     bottomLeft: Radius.circular(200),
                                     topLeft: Radius.circular(20),
                                     bottomRight: Radius.circular(20),
@@ -228,7 +228,7 @@ class Register extends StatelessWidget {
                                     begin: Alignment.centerRight,
                                     end: Alignment.centerLeft,
                                     colors: [
-                                      Colors.purple,
+                                      defaultPurpleColor,
                                       Color(0xFF40E0D0),
                                     ],
                                   ),

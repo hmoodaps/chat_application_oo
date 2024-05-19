@@ -110,7 +110,7 @@ defaultTextFormField({
   Color defaultBorderColor = Colors.black,
   Color focusedBorderColor = Colors.orange,
   Color borderColorOnNotFocus = Colors.black,
-  int? maxLength = 999,
+  int? maxLength = 9999999999,
   BorderRadius borderRadius = BorderRadius.zero,
   BorderRadius borderRadiusOnFocus = BorderRadius.zero,
   BorderRadius borderRadiusOnNotFocus = BorderRadius.zero,
@@ -121,9 +121,12 @@ defaultTextFormField({
   Color textColorIfFieldNotEnable = Colors.black,
   Color textColorIfFieldEnable = Colors.white,
   TextInputType textInputType = TextInputType.text,
+  textInputAction = TextInputAction.next ,
+  int maxLines = 1 ,
 }) {
   return TextFormField(
-    textInputAction: TextInputAction.next,
+    maxLines: maxLines,
+    textInputAction: textInputAction,
     keyboardType: textInputType,
     enabled: enabled,
     style: TextStyle(
@@ -208,7 +211,8 @@ showToastMSG(String msg) {
 }
 
 //defaultColor
-Color defaultColor = const Color(0xFF40E0D0);
+Color defaultBlueColor = const Color(0xFF40E0D0);
+Color defaultPurpleColor = const Color(0xFF8A2BE2);
 
 //fade out the child
 class FadeIn extends StatefulWidget {
@@ -387,11 +391,11 @@ Widget myDrawerHeader({required String name , required Color drawerHeaderColor ,
     );
 
 Widget shimmer({required Widget child }) => ShimmerEffect(
-      baseColor: defaultColor,
-      highlightColor: Colors.purple,
+      baseColor: defaultBlueColor,
+      highlightColor: defaultPurpleColor,
       child: Ink(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
+          decoration:  BoxDecoration(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               bottomRight: Radius.circular(20),
             ),
@@ -399,8 +403,8 @@ Widget shimmer({required Widget child }) => ShimmerEffect(
               begin: Alignment.centerRight,
               end: Alignment.centerLeft,
               colors: [
-                Colors.purple,
-                Colors.purple,
+                defaultPurpleColor,
+                defaultPurpleColor,
               ],
             ),
           ),

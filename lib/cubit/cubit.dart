@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:chat_application/components/components.dart';
 import 'package:chat_application/model/model.dart';
+import 'package:chat_application/model/post_model.dart';
 import 'package:chat_application/screens/calls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,6 +16,8 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../screens/hidden.dart';
 import '../screens/profile.dart';
 import 'appstates.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class CubitClass extends Cubit<AppState> {
   CubitClass() : super(InitCubit());
@@ -51,7 +56,7 @@ class CubitClass extends Cubit<AppState> {
     const Chats(),
     const Hidden(),
     const Calls(),
-    const Profile(),
+    Profile(),
   ];
 
 //Home card setting=====================================================================================================
@@ -76,9 +81,9 @@ class CubitClass extends Cubit<AppState> {
 
   changeFavIcon() {
     isFaveIconPressed
-        ? faveIcon = const Icon(
+        ? faveIcon = Icon(
             Icons.favorite,
-            color: Colors.red,
+            color: defaultPurpleColor,
           )
         : faveIcon = const Icon(
             Icons.favorite_border,
@@ -137,17 +142,23 @@ class CubitClass extends Cubit<AppState> {
 
   signInWithEmailAndPass(
       {required context, required String email, required String pass}) {
-     try {
-       showDialog(context: context, builder: (context){return const Center(child: CircularProgressIndicator(),);});
+    try {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          });
       _auth
           .signInWithEmailAndPassword(email: email, password: pass)
           .then((value) {
         getData();
-       Navigator.pop(context);
+        Navigator.pop(context);
         emit(SignInWithEmailAndPass(value: value));
       });
       //Navigator.pop(context);
-    }on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       String errorMessage = 'An error occurred';
       // التحقق من نوع الخطأ وتحديد الرسالة المناسبة
       if (e.code == 'user-not-found') {
@@ -205,7 +216,10 @@ class CubitClass extends Cubit<AppState> {
       email: email,
       userName: name,
       profilePhoto:
-          'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/employee-icon.svg',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
+      bio: 'Write your bio ..',
+      backgroundPhoto:
+          'https://lectera.com/info/storage/img/20210805/fa586bb6c04bf0989d70_808xFull.jpg',
     );
     try {
       FirebaseFirestore.instance
@@ -215,16 +229,15 @@ class CubitClass extends Cubit<AppState> {
           .then((value) {
         getData();
         emit(CreateUser());
-      }).catchError((e) {
-      });
-    } catch (e){
+      }).catchError((e) {});
+    } catch (e) {
       if (kDebugMode) {
         print(e.toString());
       }
     }
   }
 
-  Model  model = Model();
+  Model model = Model();
 
   getData() async {
     // ignore: unused_local_variable
@@ -234,8 +247,9 @@ class CubitClass extends Cubit<AppState> {
         .doc(_auth.currentUser!.uid)
         .get()
         .then((value) {
-          model = Model.fromJson(value.data()!);
-      emit(FetchUserData(model: Model(email: model!.email, userName: model!.userName)));
+      model = Model.fromJson(value.data()!);
+      emit(FetchUserData(
+          model: Model(email: model.email, userName: model.userName)));
       return value;
     });
   }
@@ -246,5 +260,218 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
+  //Image Picker===================================================================================
+  File? backGroundPhoto;
+  File? profilePhoto;
 
+  Future<void> getBackGroundPhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      backGroundPhoto = File(image.path);
+      uploadBackgroundPhoto(backGroundPhoto);
+      emit(GetBackGroundPhotoSuccess());
+    } else {
+      if (kDebugMode) {
+        print('No Image Selected');
+      }
+      emit(GetBackGroundPhotoFailed());
+    }
+  }
+
+  Future<void> getProfilePhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      profilePhoto = File(image.path);
+      uploadProfilePhoto(profilePhoto);
+      emit(GetProfileImageSuccess());
+    } else {
+      if (kDebugMode) {
+        print('No Image Selected');
+      }
+      emit(GetProfileImageFailed());
+    }
+  }
+
+//upload profile and background photo to the firebase ================================================================
+  String? profilePhotoUrl;
+
+  String? backgroundPhotoUrl;
+
+  Future<void> uploadProfilePhoto(File? profilePhoto) async {
+    if (model.backgroundPhoto != null) {
+      await _deletePreviousPhoto(model.backgroundPhoto!);
+    }
+    await FirebaseStorage.instance
+        .ref(
+            'users/profilePhotos/${_auth.currentUser!.uid}${Uri.file(profilePhoto!.path).pathSegments.last}')
+        .putFile(profilePhoto)
+        .then((value) {
+      value.ref.getDownloadURL().then((value) {
+        profilePhotoUrl = value;
+      }).catchError((error) {
+        if (kDebugMode) {
+          print(error);
+        }
+      });
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+
+  Future<void> uploadBackgroundPhoto(File? backGroundPhoto) async {
+    if (model.backgroundPhoto != null) {
+      await _deletePreviousPhoto(model.backgroundPhoto!);
+    }
+    await FirebaseStorage.instance
+        .ref(
+            'users/backgroundPhotos/${_auth.currentUser!.uid}${Uri.file(backGroundPhoto!.path).pathSegments.last}')
+        .putFile(backGroundPhoto)
+        .then((value) {
+      value.ref.getDownloadURL().then((value) {
+        backgroundPhotoUrl = value;
+      }).catchError((error) {
+        if (kDebugMode) {
+          print(error);
+        }
+      });
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+
+  //update profile ============================
+  Future<void> updateProfile(
+      {String? name,
+      String? profilePhotoUrl,
+      String? backgroundPhotoUrl,
+      String? bio}) async {
+    Model thisModel = Model(
+      email: _auth.currentUser!.email,
+      userName: name ?? model.userName,
+      profilePhoto: profilePhotoUrl ?? model.profilePhoto,
+      bio: bio ?? model.bio,
+      backgroundPhoto: backgroundPhotoUrl ?? model.backgroundPhoto,
+    );
+    emit(UpdatingProfileData());
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.currentUser!.uid)
+        .update(thisModel.toMap())
+        .then((value) {
+      getData();
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+
+  //deletePreviousPhoto =====================================================================
+  Future<void> _deletePreviousPhoto(String photoUrl) async {
+    try {
+      await FirebaseStorage.instance.refFromURL(photoUrl).delete();
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error deleting previous photo: $error');
+      }
+    }
+  }
+
+  //posts handling ======================================================================
+  //Image Picker==============
+  File? postPhoto;
+
+  Future<void> getPostPhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      postPhoto = File(image.path);
+      emit(GetPostPhotoSuccess());
+    } else {
+      if (kDebugMode) {
+        print('No Image Selected');
+      }
+      emit(GetPostPhotoFailed());
+    }
+  }
+
+//upload post photo to the firebase ================================================================
+  String? postPhotoUrl;
+
+  Future<void> uploadPostPhoto(File? postPhoto) async {
+    // if (model.backgroundPhoto != null) {
+    //   await _deletePreviousPhoto(model.backgroundPhoto!);
+    // }
+    emit(UploadPostPhoto());
+    await FirebaseStorage.instance
+        .ref(
+            'users/PostsPhotos/${_auth.currentUser!.uid}${Uri.file(postPhoto!.path).pathSegments.last}')
+        .putFile(postPhoto)
+        .then((value) {
+      value.ref.getDownloadURL().then((value) {
+        postPhotoUrl = value;
+      }).catchError((error) {
+        if (kDebugMode) {
+          print(error);
+        }
+      });
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+
+  //update profile ============================
+  Future<void> createPost({
+    String? uid,
+    String? userName,
+    String? photo,
+    String? text,
+  }) async {
+    PostModel postModel = PostModel(
+      userName: model.userName,
+      uid: _auth.currentUser!.uid,
+      photo: postPhotoUrl,
+      text: text,
+    );
+    uploadPostPhoto(postPhoto).then((value)async{
+      emit(CreatingPost());
+      await FirebaseFirestore.instance
+          .collection('users')
+          .add(postModel.toMap())
+          .then((value) {
+            emit(PostCreatedSuccessfully());
+      })
+          .catchError((error) {
+        if (kDebugMode) {
+          print(error.toString());
+        }
+        emit(PostCreatedFailed());
+      });
+    });
+
+  }
+
+  // deletePhotoFromThePost==============================================================
+  deletePhotoFromThePost() {
+    postPhoto = null;
+    emit(DeletePhotoFromThePost());
+  }
+//deletePreviousPhoto =====================================================================
+// Future<void> _deletePreviousPhoto(String photoUrl) async {
+//   try {
+//     await FirebaseStorage.instance.refFromURL(photoUrl).delete();
+//   } catch (error) {
+//     if (kDebugMode) {
+//       print('Error deleting previous photo: $error');
+//     }
+//   }
+// }
 }

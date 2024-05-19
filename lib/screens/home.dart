@@ -68,7 +68,7 @@ class _HomeState extends State<Home> {
             onPressed: () => _scaffoldKey.currentState!.openDrawer(),
             child: CircleAvatar(
               radius: 40,
-              backgroundColor: cub.isDark ? Colors.purple : defaultColor,
+              backgroundColor: cub.isDark ? defaultPurpleColor : defaultBlueColor,
               child: CircleAvatar(
                 radius: 37,
                 backgroundColor: cub.isDark ? Colors.black : Colors.white,
@@ -83,18 +83,19 @@ class _HomeState extends State<Home> {
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
           appBar: AppBar(
+            automaticallyImplyLeading :false , // hide drawer button
             shadowColor: Colors.transparent,
             actions: [
               IconButton(
                 onPressed: () {
                   cub.signOut(context);
                 },
-                icon: const Icon(Icons.logout),
+                icon:  Icon(Icons.logout , color: defaultBlueColor,),
               ),
             ],
-            title: const Text(
+            title: Text(
               'S t o r y t e l l i n g',
-              style: TextStyle(fontFamily: 'rocky', fontSize: 12),
+              style: TextStyle(fontFamily: 'rocky', fontSize: 12 , color: defaultPurpleColor),
             ),
             centerTitle: false,
           ),
