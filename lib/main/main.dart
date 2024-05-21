@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => CubitClass()..getData(),
+      create: (context) => CubitClass()..getData()..getPosts(),
       child: BlocConsumer<CubitClass, AppState>(
           listener: (context, state) {},
           builder: (context, state) {

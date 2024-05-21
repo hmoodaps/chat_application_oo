@@ -60,6 +60,10 @@ class _HomeState extends State<Home> {
             onTap: (index) {
               if (index != 2) {
                 cub.changBottomNavBarIndex(index);
+              }else if(index == 0 ){
+                cub.getPosts().then((value){
+                  cub.changBottomNavBarIndex(index);
+                });
               }
             },
             currentIndex: cub.currentIndex,

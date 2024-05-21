@@ -54,6 +54,14 @@ class DeletePhotoFromThePost extends AppState{}
 class UploadPostPhoto extends AppState{}
 class PostCreatedSuccessfully extends AppState{}
 class PostCreatedFailed extends AppState{}
+class LoadingPosts extends AppState{}
+class GettingPostsDone extends AppState{}
+class GettingPostsError extends AppState{}
+class CreatingPostLoading extends AppState{}
+class CreatingPostLoadingDone extends AppState{}
+class CreatingPostWithPhoto extends AppState{}
+class PostWithPhotoCreatedSuccessfully extends AppState{}
+class PhotoUploaded extends AppState{}
 
 
 

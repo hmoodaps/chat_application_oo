@@ -215,6 +215,7 @@ class CubitClass extends Cubit<AppState> {
     Model model = Model(
       email: email,
       userName: name,
+      uid: _auth.currentUser!.uid,
       profilePhoto:
           'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
       bio: 'Write your bio ..',
@@ -249,7 +250,7 @@ class CubitClass extends Cubit<AppState> {
         .then((value) {
       model = Model.fromJson(value.data()!);
       emit(FetchUserData(
-          model: Model(email: model.email, userName: model.userName)));
+          model: Model(email: model.email, userName: model.userName , uid: _auth.currentUser!.uid)));
       return value;
     });
   }
@@ -296,7 +297,6 @@ class CubitClass extends Cubit<AppState> {
 
 //upload profile and background photo to the firebase ================================================================
   String? profilePhotoUrl;
-
   String? backgroundPhotoUrl;
 
   Future<void> uploadProfilePhoto(File? profilePhoto) async {
@@ -350,13 +350,15 @@ class CubitClass extends Cubit<AppState> {
       {String? name,
       String? profilePhotoUrl,
       String? backgroundPhotoUrl,
-      String? bio}) async {
+      String? bio
+      }) async {
     Model thisModel = Model(
       email: _auth.currentUser!.email,
       userName: name ?? model.userName,
       profilePhoto: profilePhotoUrl ?? model.profilePhoto,
       bio: bio ?? model.bio,
       backgroundPhoto: backgroundPhotoUrl ?? model.backgroundPhoto,
+      uid : _auth.currentUser!.uid ,
     );
     emit(UpdatingProfileData());
     await FirebaseFirestore.instance
@@ -416,6 +418,7 @@ class CubitClass extends Cubit<AppState> {
         .then((value) {
       value.ref.getDownloadURL().then((value) {
         postPhotoUrl = value;
+        emit(PhotoUploaded());
       }).catchError((error) {
         if (kDebugMode) {
           print(error);
@@ -428,50 +431,81 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
-  //update profile ============================
   Future<void> createPost({
-    String? uid,
-    String? userName,
     String? photo,
     String? text,
   }) async {
-    PostModel postModel = PostModel(
-      userName: model.userName,
-      uid: _auth.currentUser!.uid,
-      photo: postPhotoUrl,
-      text: text,
-    );
-    uploadPostPhoto(postPhoto).then((value)async{
-      emit(CreatingPost());
-      await FirebaseFirestore.instance
-          .collection('users')
-          .add(postModel.toMap())
-          .then((value) {
-            emit(PostCreatedSuccessfully());
-      })
-          .catchError((error) {
-        if (kDebugMode) {
-          print(error.toString());
-        }
-        emit(PostCreatedFailed());
-      });
-    });
+    emit(CreatingPostLoading());
+    await FirebaseFirestore.instance.collection('users').doc(model.uid).get().then((value) async {
+      PostModel postModel = PostModel(
+        userName: value['userName'],
+        profilePhoto: value['profilePhoto'],
+        uid: model.uid,
+        photo: postPhotoUrl,
+        text: text,
+      );
 
+      if (postPhoto == null) {
+        postPhotoUrl == '';
+        emit(CreatingPost());
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .add(postModel.toMap())
+            .then((value) {
+          emit(PostCreatedSuccessfully());
+        }).catchError((error) {
+          if (kDebugMode) {
+            print(error.toString());
+          }
+          emit(PostCreatedFailed());
+        });
+      } else {
+          await FirebaseFirestore.instance
+              .collection('posts')
+              .add(postModel.toMap())
+              .then((value) {
+            emit(PostWithPhotoCreatedSuccessfully());
+          }).catchError((error) {
+            if (kDebugMode) {
+              print(error.toString());
+            }
+            emit(PostCreatedFailed());
+          }).whenComplete(() {
+          emit(CreatingPostLoadingDone()); // Emit loading done state when the upload is complete
+        });
+      }
+    });
   }
+
 
   // deletePhotoFromThePost==============================================================
   deletePhotoFromThePost() {
     postPhoto = null;
     emit(DeletePhotoFromThePost());
   }
-//deletePreviousPhoto =====================================================================
-// Future<void> _deletePreviousPhoto(String photoUrl) async {
-//   try {
-//     await FirebaseStorage.instance.refFromURL(photoUrl).delete();
-//   } catch (error) {
-//     if (kDebugMode) {
-//       print('Error deleting previous photo: $error');
-//     }
-//   }
-// }
+
+
+//get posts===========================================================
+  List<PostModel> posts = [];
+  Set<String> postIds = {}; // مجموعة لتتبع IDs المنشورات
+
+
+  getPosts() async{
+    await FirebaseFirestore.instance.collection('posts').get().then((value) {
+      for (var e in value.docs) {
+        String postId = e.id; // الحصول على ID المنشور
+        if (!postIds.contains(postId)) {
+          posts.add(PostModel.fromJson(e.data()));
+          postIds.add(postId); // إضافة ID المنشور إلى المجموعة
+        }
+      }
+      emit(GettingPostsDone());
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+      emit(GettingPostsError());
+    });
+  }
+
 }
