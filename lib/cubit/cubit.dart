@@ -250,7 +250,10 @@ class CubitClass extends Cubit<AppState> {
         .then((value) {
       model = Model.fromJson(value.data()!);
       emit(FetchUserData(
-          model: Model(email: model.email, userName: model.userName , uid: _auth.currentUser!.uid)));
+          model: Model(
+              email: model.email,
+              userName: model.userName,
+              uid: _auth.currentUser!.uid)));
       return value;
     });
   }
@@ -350,15 +353,14 @@ class CubitClass extends Cubit<AppState> {
       {String? name,
       String? profilePhotoUrl,
       String? backgroundPhotoUrl,
-      String? bio
-      }) async {
+      String? bio}) async {
     Model thisModel = Model(
       email: _auth.currentUser!.email,
       userName: name ?? model.userName,
       profilePhoto: profilePhotoUrl ?? model.profilePhoto,
       bio: bio ?? model.bio,
       backgroundPhoto: backgroundPhotoUrl ?? model.backgroundPhoto,
-      uid : _auth.currentUser!.uid ,
+      uid: _auth.currentUser!.uid,
     );
     emit(UpdatingProfileData());
     await FirebaseFirestore.instance
@@ -407,9 +409,6 @@ class CubitClass extends Cubit<AppState> {
   String? postPhotoUrl;
 
   Future<void> uploadPostPhoto(File? postPhoto) async {
-    // if (model.backgroundPhoto != null) {
-    //   await _deletePreviousPhoto(model.backgroundPhoto!);
-    // }
     emit(UploadPostPhoto());
     await FirebaseStorage.instance
         .ref(
@@ -436,7 +435,11 @@ class CubitClass extends Cubit<AppState> {
     String? text,
   }) async {
     emit(CreatingPostLoading());
-    await FirebaseFirestore.instance.collection('users').doc(model.uid).get().then((value) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(model.uid)
+        .get()
+        .then((value) async {
       PostModel postModel = PostModel(
         userName: value['userName'],
         profilePhoto: value['profilePhoto'],
@@ -460,23 +463,23 @@ class CubitClass extends Cubit<AppState> {
           emit(PostCreatedFailed());
         });
       } else {
-          await FirebaseFirestore.instance
-              .collection('posts')
-              .add(postModel.toMap())
-              .then((value) {
-            emit(PostWithPhotoCreatedSuccessfully());
-          }).catchError((error) {
-            if (kDebugMode) {
-              print(error.toString());
-            }
-            emit(PostCreatedFailed());
-          }).whenComplete(() {
-          emit(CreatingPostLoadingDone()); // Emit loading done state when the upload is complete
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .add(postModel.toMap())
+            .then((value) {
+          emit(PostWithPhotoCreatedSuccessfully());
+        }).catchError((error) {
+          if (kDebugMode) {
+            print(error.toString());
+          }
+          emit(PostCreatedFailed());
+        }).whenComplete(() {
+          emit(
+              CreatingPostLoadingDone());
         });
       }
     });
   }
-
 
   // deletePhotoFromThePost==============================================================
   deletePhotoFromThePost() {
@@ -484,20 +487,22 @@ class CubitClass extends Cubit<AppState> {
     emit(DeletePhotoFromThePost());
   }
 
-
 //get posts===========================================================
   List<PostModel> posts = [];
-  Set<String> postIds = {}; // مجموعة لتتبع IDs المنشورات
+  List<String> postIds = [];
+  List<int> likes = [];
 
-
-  getPosts() async{
+  getPosts() async {
     await FirebaseFirestore.instance.collection('posts').get().then((value) {
       for (var e in value.docs) {
-        String postId = e.id; // الحصول على ID المنشور
+        String postId = e.id;
         if (!postIds.contains(postId)) {
           posts.add(PostModel.fromJson(e.data()));
-          postIds.add(postId); // إضافة ID المنشور إلى المجموعة
+          postIds.add(postId);
         }
+        e.reference.collection('likes').get().then((value){
+          likes.add(value.docs.length);
+        });
       }
       emit(GettingPostsDone());
     }).catchError((error) {
@@ -508,4 +513,71 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
+  postLikes(String postId) async {
+    var docRef = FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('likes')
+        .doc(model.uid);
+    var getDocs =await  docRef.get();
+    if(getDocs.exists){
+      docRef.delete();
+    }else{
+      docRef.set({'likes': true});
+    }
+
+    updateLikes( postId) ;
+
+  }
+  updateLikes(String postId) async {
+    var likesSnapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('likes')
+        .get();
+
+    int likeCount = likesSnapshot.docs.length;
+
+    int postIndex = postIds.indexOf(postId);
+    if (postIndex != -1) {
+      likes[postIndex] = likeCount;
+      emit(LikeSuccess());
+    }
+  }
+  Future<bool> hasLiked(String postId) async {
+    var docSnapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('likes')
+        .doc(model.uid)
+        .get();
+    return docSnapshot.exists;
+  }
+   // createComment(String postId , String comment) async {
+  //   var docRef = FirebaseFirestore.instance
+  //       .collection('posts')
+  //       .doc(postId)
+  //       .collection('comments')
+  //       .doc(model.uid);
+  //   var getDocs =await  docRef.get();
+  //     docRef.set({'comment':comment  , 'userName' : userName , 'time':date , 'userProfilePhoto':userProfilePhoto ,    });
+  //
+  //   updateComments( postId) ;
+  //
+  // }
+  // updateComments(String postId) async {
+  //   var likesSnapshot = await FirebaseFirestore.instance
+  //       .collection('posts')
+  //       .doc(postId)
+  //       .collection('comments')
+  //       .get();
+  //
+  //   int likeCount = likesSnapshot.docs.length;
+  //
+  //   int postIndex = postIds.indexOf(postId);
+  //   if (postIndex != -1) {
+  //     likes[postIndex] = likeCount;
+  //     emit(LikeSuccess());
+  //   }
+  // }
 }

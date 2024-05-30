@@ -36,6 +36,7 @@ class _HomeState extends State<Home> {
       listener: (context, state) {},
       builder: (context, state) {
         CubitClass cub = CubitClass.get(context);
+        cub.getPosts();
         return Scaffold(
           key: _scaffoldKey,
           drawer: myDrawer(

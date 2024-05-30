@@ -62,6 +62,7 @@ class CreatingPostLoadingDone extends AppState{}
 class CreatingPostWithPhoto extends AppState{}
 class PostWithPhotoCreatedSuccessfully extends AppState{}
 class PhotoUploaded extends AppState{}
+class LikeSuccess extends AppState{}
 
 
 

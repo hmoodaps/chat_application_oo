@@ -1,13 +1,38 @@
+import 'package:chat_application/components/components.dart';
 import 'package:chat_application/model/post_model.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:iconly/iconly.dart';
 
 import '../cubit/appstates.dart';
 import '../cubit/cubit.dart';
 
 class FirstScreen extends StatelessWidget {
   const FirstScreen({super.key});
+
+  _onLikePressed({
+    required CubitClass cub ,
+    required String postId ,
+  }){
+   return FutureBuilder<bool>(
+      future: cub.hasLiked(postId),
+      builder: (context, snapshot) {
+        bool hasLiked = snapshot.data ?? false;
+        return IconButton(
+          onPressed: () async {
+            await cub.postLikes(postId);
+            await cub.getPosts();
+          },
+          icon: Icon(
+            IconlyBroken.heart ,
+            color: hasLiked ? defaultPurpleColor : Colors.grey,
+          ),
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +43,7 @@ class FirstScreen extends StatelessWidget {
         body: ConditionalBuilder(
           fallback: (context) =>
               const Center(child: CircularProgressIndicator()),
-          condition: cub.posts.isNotEmpty,
+          condition: cub.posts.isNotEmpty  ,
           builder: (context) => RefreshIndicator(
             onRefresh: ()async => await cub.getPosts(),
             child: ListView.separated(
@@ -41,10 +66,10 @@ class FirstScreen extends StatelessWidget {
                           child: postHeader(cub, cub.posts[index]),
                         ),
                         Card(
-                          child: cardBody(cub, cub.posts[index]),
+                          child: cardBody(cub, cub.posts[index] , index),
                         ),
                         Card(
-                          child: cardBottom(cub),
+                          child: cardBottom(cub  , index,state),
                         ),
                       ],
                     ),
@@ -80,9 +105,12 @@ class FirstScreen extends StatelessWidget {
     );
   }
 
-  Widget cardBody(CubitClass cub, PostModel model) {
+  Widget cardBody(CubitClass cub, PostModel model , int index) {
+    String postId = cub.postIds[index];
     return GestureDetector(
-      onDoubleTap: () => cub.changeFaveIconPressed(),
+      onDoubleTap: ()async {
+_onLikePressed(cub: cub, postId: postId);
+        },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -110,12 +138,14 @@ class FirstScreen extends StatelessWidget {
     );
   }
 
-  Widget cardBottom(CubitClass cub) {
+  Widget cardBottom(CubitClass cub, int index, AppState state) {
+    String postId = cub.postIds[index];
     return Row(
       children: [
-        IconButton(
-          onPressed: () => cub.changeFaveIconPressed(),
-          icon: cub.changeFavIcon(),
+       _onLikePressed(cub: cub, postId: postId) ,
+        Text(
+          cub.likes.isEmpty ? '' : cub.likes[index].toString() ,
+          style: const TextStyle(color: Colors.black),
         ),
         IconButton(
           onPressed: () {},
@@ -132,4 +162,6 @@ class FirstScreen extends StatelessWidget {
       ],
     );
   }
+
+
 }
