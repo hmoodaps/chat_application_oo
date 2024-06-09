@@ -9,11 +9,13 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 
 class Register extends StatelessWidget {
   Register({super.key, required this.onLoginPressed});
+
   final void Function()? onLoginPressed;
   final TextEditingController emailCo = TextEditingController();
   final TextEditingController userNameCo = TextEditingController();
   final TextEditingController passCo = TextEditingController();
   final TextEditingController repassCo = TextEditingController();
+  final TextEditingController nameCo = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +34,23 @@ class Register extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 30,),
+                        const SizedBox(
+                          height: 30,
+                        ),
                         const Center(
                           child: Text(
                             'Register',
                             style: TextStyle(fontFamily: 'rocky', fontSize: 50),
                           ),
                         ),
+
                         defaultTextFormField(
                           textColorIfFieldEnable:
-                              cub.isDark ? Colors.white : Colors.black,
-                          labelText: 'UserName',
+                          cub.isDark ? Colors.white : Colors.black,
+                          labelText: 'name',
                           labelColor: cub.isDark ? Colors.white : Colors.black,
                           prefixIcon: const Icon(
-                            IconlyBroken.profile,
+                            IconlyBroken.user_2,
                             color: Color(0xFF7FFFD4),
                           ),
                           defaultBorderColor: const Color(0xFF7FFFD4),
@@ -64,7 +69,7 @@ class Register extends StatelessWidget {
                             bottomLeft: Radius.circular(50.0),
                             bottomRight: Radius.circular(50.0),
                           ),
-                          controller: userNameCo,
+                          controller: nameCo,
                           validatorFunction: (value) {
                             if (value!.isEmpty) {
                               return 'This filed is required';
@@ -78,7 +83,7 @@ class Register extends StatelessWidget {
                         ),
                         defaultTextFormField(
                           textColorIfFieldEnable:
-                              cub.isDark ? Colors.white : Colors.black,
+                          cub.isDark ? Colors.white : Colors.black,
                           labelText: 'Email Address',
                           labelColor: cub.isDark ? Colors.white : Colors.black,
                           prefixIcon: const Icon(
@@ -115,7 +120,7 @@ class Register extends StatelessWidget {
                         ),
                         defaultTextFormField(
                           textColorIfFieldEnable:
-                              cub.isDark ? Colors.white : Colors.black,
+                          cub.isDark ? Colors.white : Colors.black,
                           labelText: 'Password',
                           labelColor: cub.isDark ? Colors.white : Colors.black,
                           prefixIcon: const Icon(
@@ -152,7 +157,7 @@ class Register extends StatelessWidget {
                         ),
                         defaultTextFormField(
                           textColorIfFieldEnable:
-                              cub.isDark ? Colors.white : Colors.black,
+                          cub.isDark ? Colors.white : Colors.black,
                           labelText: 'rePassword',
                           labelColor: cub.isDark ? Colors.white : Colors.black,
                           prefixIcon: const Icon(
@@ -185,69 +190,86 @@ class Register extends StatelessWidget {
                           context: context,
                         ),
                         const SizedBox(
-                          height: 15,
+                          height: 65,
                         ),
                         Center(
                             child: Container(
-                          height: 70,
-                          width: 270,
-                          decoration: BoxDecoration(
-                            color: cub.isDark ? Colors.white : Colors.black,
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(200),
-                              topLeft: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                              topRight: Radius.circular(200),
-                            ),
-                          ),
-                          child: MaterialButton(
-                            onPressed: () {
-                              formKey.currentState!.validate()
-                                  ?(
-                                  passCo.text==repassCo.text
-                                  ?(cub.addUser(context: context,
-                                      email: emailCo.text, pass: passCo.text, name: userNameCo.text ,),)
-                                  :showMessageWrong(
-                                      contentType: ContentType.warning,
-                                      context: context, msg: 'Seems like pass not match'),
-                              )
-                                  :null ;
-                            },
-                            child: ShimmerEffect(
-                              baseColor: const Color(0xFF40E0D0),
-                              highlightColor: defaultPurpleColor,
-                              child: Ink(
-                                decoration:  BoxDecoration(
-                                  borderRadius:const BorderRadius.only(
-                                    bottomLeft: Radius.circular(200),
-                                    topLeft: Radius.circular(20),
-                                    bottomRight: Radius.circular(20),
-                                    topRight: Radius.circular(200),
-                                  ),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.centerRight,
-                                    end: Alignment.centerLeft,
-                                    colors: [
-                                      defaultPurpleColor,
-                                      Color(0xFF40E0D0),
-                                    ],
-                                  ),
+                              height: 70,
+                              width: 270,
+                              decoration: BoxDecoration(
+                                color: cub.isDark ? Colors.white : Colors.black,
+                                borderRadius: const BorderRadius.only(
+                                  bottomLeft: Radius.circular(200),
+                                  topLeft: Radius.circular(20),
+                                  bottomRight: Radius.circular(20),
+                                  topRight: Radius.circular(200),
                                 ),
-                                child: const SizedBox(
-                                  height: 50,
-                                  width: 250,
-                                  child: Center(
-                                    child: Text(
-                                      'Register',
-                                      style: TextStyle(fontSize: 25),
+                              ),
+                              child: MaterialButton(
+                                onPressed: ()  {
+                                  if (passCo.text != repassCo.text) {
+                                    showMessageWrong(
+                                      contentType: ContentType.warning,
+                                      context: context,
+                                      msg: 'Seems like pass not match',
+                                    );
+                                  // } else if (await cub.isUsernameTaken(
+                                  //     userNameCo.text) != true) {
+                                  //   showMessageWrong(
+                                  //     contentType: ContentType.warning,
+                                  //     context: context,
+                                  //     msg: 'Seems like User Name is already taken',
+                                  //   );
+                                  } else if (formKey.currentState!.validate() !=
+                                      true) {
+                                    null;
+                                  } else {
+                                    cub.addUser(
+                                      context: context,
+                                      email: emailCo.text,
+                                      pass: passCo.text,
+                                      name: nameCo.text,
+                                      userName: userNameCo.text,
+                                    );
+                                  }
+                                },
+                                child: ShimmerEffect(
+                                  baseColor: const Color(0xFF40E0D0),
+                                  highlightColor: defaultPurpleColor,
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.only(
+                                        bottomLeft: Radius.circular(200),
+                                        topLeft: Radius.circular(20),
+                                        bottomRight: Radius.circular(20),
+                                        topRight: Radius.circular(200),
+                                      ),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.centerRight,
+                                        end: Alignment.centerLeft,
+                                        colors: [
+                                          defaultPurpleColor,
+                                          const Color(0xFF40E0D0),
+                                        ],
+                                      ),
+                                    ),
+                                    child: const SizedBox(
+                                      height: 50,
+                                      width: 250,
+                                      child: Center(
+                                        child: Text(
+                                          'Register',
+                                          style: TextStyle(fontSize: 25),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        )),
-                   const SizedBox(height: 10,),
+                            )),
+                        const SizedBox(
+                          height: 10,
+                        ),
                         const Center(child: Text('don\'t have an account ?')),
                         Center(
                           child: MaterialButton(
@@ -273,18 +295,18 @@ class Register extends StatelessWidget {
                         ),
                         const SizedBox(
                           height: 25,
-                         ),
-                        // Row(
-                        //   mainAxisAlignment: MainAxisAlignment.center,
-                        //   children: [
-                        //     imageButton(
-                        //         textColor: cub.isDark ? Colors.black : Colors.white,
-                        //         onPressed: () => cub.signInWithGoogle(context),
-                        //         imagePath: 'assets/images/google.png',
-                        //       context: context
-                        //     ),
-                        //   ],
-                        // ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            imageButton(
+                                textColor: cub.isDark ? Colors.black : Colors.white,
+                                onPressed: () => cub.signInWithGoogle(context),
+                                imagePath: 'assets/images/google.png',
+                              context: context
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),

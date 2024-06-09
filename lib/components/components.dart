@@ -1,4 +1,5 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:chat_application/screens/friend_requests.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -306,7 +307,7 @@ class TypewriterTextState extends State<TypewriterText> {
 
 //beautiful  snack bar require : awesome_snackbar_content
 ScaffoldMessengerState showMessageWrong(
-    {required ContentType contentType, required context, required String msg}) {
+    {required ContentType contentType, required BuildContext   context, required String msg}) {
   final snackBar = SnackBar(
     elevation: 0,
     behavior: SnackBarBehavior.floating,
@@ -359,22 +360,25 @@ GestureDetector(
 //flutter pub add cupertino_icons firebase_analytics firebase_core firebase_auth cloud_firestore google_sign_in awesome_snackbar_content flutter_facebook_auth twitter_login http font_awesome_flutter firebase_messaging_platform_interface onboarding flutter_bloc shared_preferences smooth_page_indicator dio conditional_builder_null_safety flutter_icon_snackbar shimmer_effect carousel_slider fluttertoast iconly lottie awesome_dialog
 
 //these components created here
-Widget myDrawer({required String name,required Color nameColor ,required Color drawerColor ,required Color drawerHeaderColor}) => Drawer(
+Widget myDrawer({required String profileImage , required String name,required Color nameColor ,required Color drawerColor ,required Color drawerHeaderColor , required BuildContext context}) => Drawer(
       backgroundColor: drawerColor,
       child: Column(
         children: [
-          myDrawerHeader(name : name,nameColor:nameColor ,drawerHeaderColor : drawerHeaderColor),
+          myDrawerHeader(name : name,nameColor:nameColor ,drawerHeaderColor : drawerHeaderColor , profileImage : profileImage),
+          // ListTile(onTap: (){navigatorTo(context, Friends());},title: Text('friends'), ),
+          // SizedBox(height: 10,),
+          // ListTile(onTap: (){navigatorTo(context, FriendReq());},title: Text('FriendReq'), ),
         ],
       ),
     );
 
-Widget myDrawerHeader({required String name , required Color drawerHeaderColor ,required Color nameColor   }) => DrawerHeader(
+Widget myDrawerHeader({required String name , required Color drawerHeaderColor ,required Color nameColor , required String profileImage  }) => DrawerHeader(
       decoration: BoxDecoration(color: drawerHeaderColor),
       child: Column(
         children: [
-          const Center(
+           Center(
             child: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/profile.jpg'),
+              backgroundImage: NetworkImage(profileImage??''),
               radius: 50,
             ),
           ),

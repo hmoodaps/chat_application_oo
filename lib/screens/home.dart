@@ -39,7 +39,7 @@ class _HomeState extends State<Home> {
         cub.getPosts();
         return Scaffold(
           key: _scaffoldKey,
-          drawer: myDrawer(
+          drawer: myDrawer(profileImage: cub.model.profilePhoto ?? '',context: context,
             name: cub.model.userName ?? '',
             drawerColor: cub.isDark ? Colors.grey.shade500 : Colors.grey.shade200,
             drawerHeaderColor: cub.isDark ? Colors.grey.shade800 : Colors.grey.shade500,
@@ -65,6 +65,9 @@ class _HomeState extends State<Home> {
                 cub.getPosts().then((value){
                   cub.changBottomNavBarIndex(index);
                 });
+              }else if (index == 1){
+                cub.getAllUsers();
+                cub.changBottomNavBarIndex(index);
               }
             },
             currentIndex: cub.currentIndex,

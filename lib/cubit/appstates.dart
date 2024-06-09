@@ -63,7 +63,17 @@ class CreatingPostWithPhoto extends AppState{}
 class PostWithPhotoCreatedSuccessfully extends AppState{}
 class PhotoUploaded extends AppState{}
 class LikeSuccess extends AppState{}
-
+class SuccessGettingAllUser extends AppState{}
+class ErrorGettingAllUser extends AppState{}
+class CreateUserError extends AppState{
+  String error;
+  CreateUserError(this.error);
+}class AddUserError extends AppState{
+  String error;
+  AddUserError(this.error);
+}
+class SendMessageSuccess extends AppState{}
+class SendMessageError extends AppState{}
 
 
 

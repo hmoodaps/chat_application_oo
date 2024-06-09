@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:chat_application/components/components.dart';
+import 'package:chat_application/model/message_model.dart';
 import 'package:chat_application/model/model.dart';
 import 'package:chat_application/model/post_model.dart';
 import 'package:chat_application/screens/calls.dart';
@@ -100,45 +101,34 @@ class CubitClass extends Cubit<AppState> {
         '706942053414-bjepa4bsq8jr1648ncaptq7553n44ut2.apps.googleusercontent.com',
   );
 
-  //check if login method is google and its the first time
 
-  // Future<void> signInWithGoogle(context) async {
-  //   showDialog(
-  //       context: context,
-  //       builder: (context) => const Center(
-  //             child: CircularProgressIndicator(),
-  //           ));
-  //   try {
-  //     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-  //     final GoogleSignInAuthentication googleAuth =
-  //         await googleUser!.authentication;
-  //     final AuthCredential credential = GoogleAuthProvider.credential(
-  //       accessToken: googleAuth.accessToken,
-  //       idToken: googleAuth.idToken,
-  //     );
-  //     User? user;
-  //     await _auth.signInWithCredential(credential).then((value) async {
-  //       // if ( await checkUserDataExistence(
-  //       //     FirebaseAuth.instance.currentUser!.uid) == true) {
-  //       //    navigatorReplace(context, Home());
-  //       //   print(await checkUserDataExistence(
-  //       //       FirebaseAuth.instance.currentUser!.uid));
-  //       //   Navigator.pop(context);
-  //       // } else {
-  //       //   // navigatorReplace(context, RegisterByGooglePage());
-  //       //   Navigator.pop(context);
-  //       // }
-  //      // Navigator.pop(context);
-  //       emit(LoggedInByGoogle(value: value));
-  //     });
-  //   } catch (error) {
-  //     Navigator.pop(context);
-  //     showMessageWrong(
-  //         contentType: ContentType.failure,
-  //         context: context,
-  //         msg: 'Something went wrong');
-  //   }
-  // }
+  Future<void> signInWithGoogle(context) async {
+    showDialog(
+        context: context,
+        builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ));
+    try {
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser!.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await _auth.signInWithCredential(credential).then((value) async {
+        createUser(_auth.currentUser!.email!, _auth.currentUser!.displayName??'New User', context , model.userName);
+       Navigator.pop(context);
+        emit(LoggedInByGoogle(value: value));
+      });
+    } catch (error) {
+      Navigator.pop(context);
+      showMessageWrong(
+          contentType: ContentType.failure,
+          context: context,
+          msg: 'Something went wrong');
+    }
+  }
 
   signInWithEmailAndPass(
       {required context, required String email, required String pass}) {
@@ -181,68 +171,83 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-  addUser(
-      {required context,
-      required String email,
-      required String pass,
-      required String name}) {
+  addUser({
+    required context,
+    required String email,
+    required String pass,
+    required String name,
+    required String userName
+  }) {
     showDialog(
         context: context,
         builder: (context) => const Center(
-              child: CircularProgressIndicator(),
-            ));
+          child: CircularProgressIndicator(),
+        ));
     try {
-      _auth
-          .createUserWithEmailAndPassword(email: email, password: pass)
+      _auth.createUserWithEmailAndPassword(email: email, password: pass)
           .then((value) {
-        createUser(email, name, context);
+        createUser(email, name, userName, context);
       }).catchError((e) {
-        if (kDebugMode) {
-          print(e.toString());
-        }
+        Navigator.pop(context);
+        print(e.toString());
+        emit(AddUserError(e.toString()));
       });
-      //Navigator.pop(context);
-      // navigatorReplace(context, Home());
-    } on FirebaseException catch (e) {
-      //Navigator.pop(context);
-      if (kDebugMode) {
-        print('addUser2$e');
-      }
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context);
+      print(e.toString());
+      emit(AddUserError(e.toString()));
     }
   }
+  void createUser(String email, String name, String userName, context) async {
 
-  void createUser(String email, String name, context) {
     Model model = Model(
       email: email,
-      userName: name,
+      userName: userName,
+      name: name,
       uid: _auth.currentUser!.uid,
       profilePhoto:
-          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
       bio: 'Write your bio ..',
       backgroundPhoto:
-          'https://lectera.com/info/storage/img/20210805/fa586bb6c04bf0989d70_808xFull.jpg',
+      'https://lectera.com/info/storage/img/20210805/fa586bb6c04bf0989d70_808xFull.jpg',
     );
     try {
-      FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('users')
           .doc(_auth.currentUser!.uid)
           .set(model.toMap())
           .then((value) {
         getData();
+        Navigator.pop(context);
         emit(CreateUser());
-      }).catchError((e) {});
-    } catch (e) {
-      if (kDebugMode) {
+      }).catchError((e) {
+        Navigator.pop(context);
         print(e.toString());
-      }
+        emit(CreateUserError(e.toString()));
+      });
+    } catch (e) {
+      Navigator.pop(context);
+      print(e.toString());
+      emit(CreateUserError(e.toString()));
     }
   }
+
+
+  // Future<bool> isUsernameTaken(String username) async {
+  //   var querySnapshot = await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .where('userName', isEqualTo: username)
+  //       .get();
+  //
+  //   return querySnapshot.docs.isNotEmpty;
+  // }
+
+  //getting data from firebase
 
   Model model = Model();
 
   getData() async {
-    // ignore: unused_local_variable
-    DocumentSnapshot<Map<String, dynamic>>? snapshot = await FirebaseFirestore
+   await FirebaseFirestore
         .instance
         .collection('users')
         .doc(_auth.currentUser!.uid)
@@ -253,6 +258,7 @@ class CubitClass extends Cubit<AppState> {
           model: Model(
               email: model.email,
               userName: model.userName,
+              name: model.name,
               uid: _auth.currentUser!.uid)));
       return value;
     });
@@ -474,8 +480,7 @@ class CubitClass extends Cubit<AppState> {
           }
           emit(PostCreatedFailed());
         }).whenComplete(() {
-          emit(
-              CreatingPostLoadingDone());
+          emit(CreatingPostLoadingDone());
         });
       }
     });
@@ -500,7 +505,7 @@ class CubitClass extends Cubit<AppState> {
           posts.add(PostModel.fromJson(e.data()));
           postIds.add(postId);
         }
-        e.reference.collection('likes').get().then((value){
+        e.reference.collection('likes').get().then((value) {
           likes.add(value.docs.length);
         });
       }
@@ -519,16 +524,16 @@ class CubitClass extends Cubit<AppState> {
         .doc(postId)
         .collection('likes')
         .doc(model.uid);
-    var getDocs =await  docRef.get();
-    if(getDocs.exists){
+    var getDocs = await docRef.get();
+    if (getDocs.exists) {
       docRef.delete();
-    }else{
+    } else {
       docRef.set({'likes': true});
     }
 
-    updateLikes( postId) ;
-
+    updateLikes(postId);
   }
+
   updateLikes(String postId) async {
     var likesSnapshot = await FirebaseFirestore.instance
         .collection('posts')
@@ -544,6 +549,7 @@ class CubitClass extends Cubit<AppState> {
       emit(LikeSuccess());
     }
   }
+
   Future<bool> hasLiked(String postId) async {
     var docSnapshot = await FirebaseFirestore.instance
         .collection('posts')
@@ -553,31 +559,87 @@ class CubitClass extends Cubit<AppState> {
         .get();
     return docSnapshot.exists;
   }
-   // createComment(String postId , String comment) async {
-  //   var docRef = FirebaseFirestore.instance
-  //       .collection('posts')
-  //       .doc(postId)
-  //       .collection('comments')
-  //       .doc(model.uid);
-  //   var getDocs =await  docRef.get();
-  //     docRef.set({'comment':comment  , 'userName' : userName , 'time':date , 'userProfilePhoto':userProfilePhoto ,    });
-  //
-  //   updateComments( postId) ;
-  //
+
+
+
+  List<Model> allUsers = [];
+
+  getAllUsers() async{
+  await  FirebaseFirestore.instance.collection('users').get().then((value) {
+      for (var element in value.docs) {
+        if(element.data()['uid']!=_auth.currentUser!.uid) {
+          allUsers.add(Model.fromJson(element.data()));
+          emit(SuccessGettingAllUser());
+        }
+      }
+    }).catchError((error){emit(ErrorGettingAllUser());});
+  }
+  //friends =======================================================
+//create friends collection in the firebase ===
+
+  // Future<void> sendFriendRequest( String friendUserId) async {
+  //   await FirebaseFirestore.instance.collection('friendRequests').add({
+  //     'from': _auth.currentUser!.uid,
+  //     'to': friendUserId,
+  //     'status': 'pending', // حالة الطلب، يمكن أن تكون 'pending'، 'accepted'، أو 'rejected'
+  //     'timestamp': FieldValue.serverTimestamp(),
+  //   });
   // }
-  // updateComments(String postId) async {
-  //   var likesSnapshot = await FirebaseFirestore.instance
-  //       .collection('posts')
-  //       .doc(postId)
-  //       .collection('comments')
-  //       .get();
-  //
-  //   int likeCount = likesSnapshot.docs.length;
-  //
-  //   int postIndex = postIds.indexOf(postId);
-  //   if (postIndex != -1) {
-  //     likes[postIndex] = likeCount;
-  //     emit(LikeSuccess());
-  //   }
+  // Stream<QuerySnapshot> getIncomingFriendRequests(String currentUserId) {
+  //   return FirebaseFirestore.instance
+  //       .collection('friendRequests')
+  //       .where('to', isEqualTo: currentUserId)
+  //       .where('status', isEqualTo: 'pending')
+  //       .snapshots();
   // }
+  // Future<void> acceptFriendRequest(String requestId, String currentUserId, String friendUserId) async {
+  //   // تحديث حالة الطلب إلى 'accepted'
+  //   await FirebaseFirestore.instance.collection('friendRequests').doc(requestId).update({
+  //     'status': 'accepted',
+  //   });
+  //
+  //   // إضافة المستخدمين إلى قائمة الأصدقاء
+  //   await FirebaseFirestore.instance.collection('friends').doc(currentUserId).collection('userFriends').doc(friendUserId).set({});
+  //   await FirebaseFirestore.instance.collection('friends').doc(friendUserId).collection('userFriends').doc(currentUserId).set({});
+  // }
+  //
+  // Future<void> rejectFriendRequest(String requestId) async {
+  //   // تحديث حالة الطلب إلى 'rejected'
+  //   await FirebaseFirestore.instance.collection('friendRequests').doc(requestId).update({
+  //     'status': 'rejected',
+  //   });
+  // }
+  // Stream<QuerySnapshot> getFriends(String currentUserId) {
+  //   return FirebaseFirestore.instance
+  //       .collection('friends')
+  //       .doc(currentUserId)
+  //       .collection('userFriends')
+  //       .snapshots();
+  // }
+
+sendMessage(
+  {
+    required String receiverUid ,
+    required String date ,
+    required String message ,
+  }
+    ){
+    MessageModel messageModel = MessageModel(date: DateTime.now().toString() , message: message , receiverUid: receiverUid , senderUid: FirebaseAuth.instance.currentUser!.uid);
+    FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).collection('chats').doc(receiverUid).collection('messages').add(messageModel.toMap()).then((value){
+      emit(SendMessageSuccess());
+    }).catchError((error){
+      emit(SendMessageError());
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+    FirebaseFirestore.instance.collection('users').doc(receiverUid).collection('chats').doc(FirebaseAuth.instance.currentUser!.uid).collection('messages').add(messageModel.toMap()).then((value){
+      emit(SendMessageSuccess());
+    }).catchError((error){
+      emit(SendMessageError());
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+}
 }

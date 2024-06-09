@@ -203,15 +203,15 @@ class Login extends StatelessWidget {
                     const SizedBox(
                       height: 25,
                     ),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.center,
-                    //   children: [
-                    //     imageButton(
-                    //       textColor: cub.isDark ? Colors.black : Colors.white,
-                    //         onPressed: () => cub.signInWithGoogle(context  ),
-                    //         imagePath: 'assets/images/google.png' , context: context),
-                    //   ],
-                    // ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        imageButton(
+                          textColor: cub.isDark ? Colors.black : Colors.white,
+                            onPressed: () => cub.signInWithGoogle(context),
+                            imagePath: 'assets/images/google.png' , context: context),
+                      ],
+                    ),
                   ],
                 ),
               ),

@@ -56,6 +56,7 @@ class AuthPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    CubitClass cub = CubitClass.get(context);
     return BlocConsumer<CubitClass, AppState>(
       listener: (context, state) {},
       builder: (context, state) {
@@ -64,6 +65,7 @@ class AuthPage extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return const Home();
+
             } else {
               return const ToggleBetweenLoginAndRegisterClass();
             }
