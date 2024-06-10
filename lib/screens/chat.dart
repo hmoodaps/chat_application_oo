@@ -21,13 +21,13 @@ class Chat extends StatelessWidget {
           title: Row(children: [
             CircleAvatar(
               backgroundImage: NetworkImage(model!.profilePhoto ?? ''),
-              radius: 35,
+              radius: 20,
             ),
-            const SizedBox(width: 15,),
-            Text(model!.userName ?? ''),
+            const SizedBox(width: 8,),
+            Text(model!.userName ?? '' , style: const TextStyle(fontSize: 15),),
           ],),
           leading: IconButton(onPressed: (){Navigator.pop(context);}, icon: const Icon(IconlyBroken.arrow_left_2),),
-          backgroundColor: Colors.blue.withOpacity(300),
+          backgroundColor: Colors.blue,
         ),
 
       ),
