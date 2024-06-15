@@ -115,7 +115,7 @@ class Chat extends StatelessWidget {
   }
 
   _spacer(CubitClass cub){
-    cub.messageModelList.isEmpty ? const Spacer() : null ;
+    return cub.messageModelList.isEmpty ? const Spacer() :const  SizedBox() ;
   }
   _chat({
     required MessageModel messageModel,
