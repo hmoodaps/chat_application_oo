@@ -117,7 +117,7 @@ class AddPost extends StatelessWidget {
                         width: 15,
                       ),
                       Text(
-                        cub.model.userName!,
+                        cub.model.name!,
                         style: TextStyle(color: defaultPurpleColor),
                       ),
                     ],

@@ -270,12 +270,12 @@ class Register extends StatelessWidget {
                         const SizedBox(
                           height: 10,
                         ),
-                        const Center(child: Text('don\'t have an account ?')),
+                        const Center(child: Text('have an account ?')),
                         Center(
                           child: MaterialButton(
                               onPressed: () => onLoginPressed!(),
                               child: const Text(
-                                'Register now ^_^ !',
+                                'Login Now ^_^ !',
                                 style: TextStyle(
                                     fontSize: 17,
                                     color: Colors.blue,

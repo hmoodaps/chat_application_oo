@@ -10,7 +10,7 @@ class Model {
 
   Model(
       {this.email,
-      this.userName,
+      //this.userName,
       this.profilePhoto,
       this.bio,
       this.name,
@@ -19,7 +19,7 @@ class Model {
 
   Model.fromJson(Map<String, dynamic> json)
       : email = json['email'] ?? '',
-        userName = json['userName'] ?? '',
+      //  userName = json['userName'] ?? '',
         uid = json['uid'] ?? '',
         name = json['name'] ?? '',
         profilePhoto = json['profilePhoto'] ?? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
@@ -27,7 +27,7 @@ class Model {
         backgroundPhoto = json['backgroundPhoto'] ??  'https://lectera.com/info/storage/img/20210805/fa586bb6c04bf0989d70_808xFull.jpg';
 
   Map<String, dynamic> toMap() => {
-        'userName': userName,
+       // 'userName': userName,
         'uid': uid,
         'name': name,
         'email': email,

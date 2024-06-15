@@ -12,7 +12,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
     SystemUiOverlay.top
-  ]);  // to only hide the status bar
+  ]);
 
   await Firebase.initializeApp();
   runApp(const MyApp());

@@ -11,75 +11,63 @@ import '../cubit/cubit.dart';
 class FirstScreen extends StatelessWidget {
   const FirstScreen({super.key});
 
-  _onLikePressed({
-    required CubitClass cub ,
-    required String postId ,
-  }){
-   return FutureBuilder<bool>(
-      future: cub.hasLiked(postId),
-      builder: (context, snapshot) {
-        bool hasLiked = snapshot.data ?? false;
-        return IconButton(
-          onPressed: () async {
-            await cub.postLikes(postId);
-            await cub.getPosts();
-          },
-          icon: Icon(
-            IconlyBroken.heart ,
-            color: hasLiked ? defaultPurpleColor : Colors.grey,
-          ),
-        );
-      },
-    );
-  }
-
-
   @override
   Widget build(BuildContext context) {
     CubitClass cub = CubitClass.get(context);
-    return BlocConsumer<CubitClass, AppState>(
-      listener: (context, state) {},
-      builder: (context, state) => Scaffold(
-        body: ConditionalBuilder(
-          fallback: (context) =>
-              const Center(child: CircularProgressIndicator()),
-          condition: cub.posts.isNotEmpty  ,
-          builder: (context) => RefreshIndicator(
-            onRefresh: ()async => await cub.getPosts(),
-            child: ListView.separated(
-              shrinkWrap: true,
-              separatorBuilder: (context, index) => const SizedBox(
-                height: 25,
+    return Builder(
+      builder: (context){
+        CubitClass().getPosts();
+        return BlocConsumer<CubitClass, AppState>(
+          listener: (context, state) {},
+          builder: (context, state) => Scaffold(
+            body: ConditionalBuilder(
+              fallback: (context) =>  Center(
+                child: Column(
+                  children: [
+                  Image.asset('assets/images/nothing.png'),
+                  const Text('there is nothing here yet')
+                ],),
               ),
-              itemCount: cub.posts.length,
-              itemBuilder: (context, index) => Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Card(
-                    elevation: 5,
-                    child: Column(
-                      children: [
-                        Card(
-                          child: postHeader(cub, cub.posts[index]),
+              condition: cub.posts.isNotEmpty  ,
+              builder: (context) => RefreshIndicator(
+                onRefresh: ()async => await cub.getPosts(),
+                child: ListView.separated(
+                  reverse: true,
+                  shrinkWrap: true,
+                  separatorBuilder: (context, index) => const SizedBox(
+                    height: 25,
+                  ),
+                  itemCount: cub.posts.length,
+                  itemBuilder: (context, index) => Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Card(
+                        elevation: 5,
+                        child: Column(
+                          children: [
+                            Card(
+                              child: postHeader(cub, cub.posts[index]),
+                            ),
+                            Card(
+                              child: cardBody(cub, cub.posts[index] , index),
+                            ),
+                            Card(
+                              child: cardBottom(cub  , index,state),
+                            ),
+                          ],
                         ),
-                        Card(
-                          child: cardBody(cub, cub.posts[index] , index),
-                        ),
-                        Card(
-                          child: cardBottom(cub  , index,state),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -162,6 +150,25 @@ _onLikePressed(cub: cub, postId: postId);
       ],
     );
   }
-
+  _onLikePressed({
+    required CubitClass cub ,
+    required String postId ,
+  }){
+    return FutureBuilder<bool>(
+      future: cub.hasLiked(postId),
+      builder: (context, snapshot) {
+        bool hasLiked = snapshot.data ?? false;
+        return IconButton(
+          onPressed: () async {
+            await cub.postLikes(postId);
+          },
+          icon: Icon(
+            IconlyBroken.heart ,
+            color: hasLiked ? defaultPurpleColor : Colors.grey,
+          ),
+        );
+      },
+    );
+  }
 
 }

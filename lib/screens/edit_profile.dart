@@ -181,8 +181,8 @@ class EditProfile extends StatelessWidget {
                       borderColorOnNotFocus:
                       cub.isDark ? defaultBlueColor : Colors.orange,
                       labelText: 'UserName',
-                      labelColor: cub.isDark ? Colors.blue : Colors.black,
                       maxLength: 15,
+                      textColorIfFieldEnable: cub.isDark ? Colors.white:Colors.black,
                     ),
                   ),
                   const SizedBox(
@@ -200,7 +200,10 @@ class EditProfile extends StatelessWidget {
                         maxLength: 130,
                         maxLines: 3,
                         textInputAction: TextInputAction.newline,
-                        textInputType: TextInputType.multiline),
+                        textInputType: TextInputType.multiline,
+                      textColorIfFieldEnable: cub.isDark ? Colors.white:Colors.black,
+
+                    ),
                   ),
                   const SizedBox(
                     height: 10,

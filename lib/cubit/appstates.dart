@@ -74,6 +74,8 @@ class CreateUserError extends AppState{
 }
 class SendMessageSuccess extends AppState{}
 class SendMessageError extends AppState{}
+class GetMessages extends AppState{}
+
 
 
 
