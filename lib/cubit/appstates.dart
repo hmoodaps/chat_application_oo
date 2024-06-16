@@ -75,6 +75,9 @@ class CreateUserError extends AppState{
 class SendMessageSuccess extends AppState{}
 class SendMessageError extends AppState{}
 class GetMessages extends AppState{}
+class DeletePost extends AppState{}
+class PostsLoadedSuccessfully extends AppState{}
+class PostsLoadedFailed extends AppState{}
 
 
 

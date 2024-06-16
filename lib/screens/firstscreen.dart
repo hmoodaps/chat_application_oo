@@ -1,10 +1,10 @@
 import 'package:chat_application/components/components.dart';
 import 'package:chat_application/model/post_model.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconly/iconly.dart';
-
 import '../cubit/appstates.dart';
 import '../cubit/cubit.dart';
 
@@ -14,25 +14,27 @@ class FirstScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     CubitClass cub = CubitClass.get(context);
+    cub.posts.sort((a, b) => b.dateTime!.compareTo(a.dateTime!));
     return Builder(
-      builder: (context){
-        CubitClass().getPosts();
+      builder: (context) {
+        cub.getPosts();
         return BlocConsumer<CubitClass, AppState>(
           listener: (context, state) {},
           builder: (context, state) => Scaffold(
             body: ConditionalBuilder(
-              fallback: (context) =>  Center(
+              fallback: (context) => Center(
                 child: Column(
                   children: [
-                  Image.asset('assets/images/nothing.png'),
-                  const Text('there is nothing here yet')
-                ],),
+                    Image.asset('assets/images/nothing.png'),
+                    const Text('there is nothing here yet'),
+                  ],
+                ),
               ),
-              condition: cub.posts.isNotEmpty  ,
+              condition: cub.posts.isNotEmpty,
               builder: (context) => RefreshIndicator(
-                onRefresh: ()async => await cub.getPosts(),
+                onRefresh: () async => await cub.getPosts(),
                 child: ListView.separated(
-                  reverse: true,
+                  reverse: false,
                   shrinkWrap: true,
                   separatorBuilder: (context, index) => const SizedBox(
                     height: 25,
@@ -49,13 +51,13 @@ class FirstScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Card(
-                              child: postHeader(cub, cub.posts[index]),
+                              child: postHeader(cub, cub.posts[index], index ),
                             ),
                             Card(
-                              child: cardBody(cub, cub.posts[index] , index),
+                              child: cardBody(cub, cub.posts[index], index),
                             ),
                             Card(
-                              child: cardBottom(cub  , index,state),
+                              child: cardBottom(cub, index, state),
                             ),
                           ],
                         ),
@@ -71,38 +73,56 @@ class FirstScreen extends StatelessWidget {
     );
   }
 
-  Widget postHeader(CubitClass cub, PostModel model) {
+  Widget postHeader(CubitClass cub, PostModel model, int index ) {
+    String postId = cub.postIds[index];
+    bool canDelete = model.uid == FirebaseAuth.instance.currentUser!.uid;
+
     return Row(
       children: [
         CircleAvatar(
-          radius: 10,
+          radius: 20,
           backgroundImage: model.profilePhoto == null
               ? const AssetImage('assets/images/profile.jpg') as ImageProvider
               : NetworkImage(model.profilePhoto!),
         ),
-        const SizedBox(
-          width: 3,
-        ),
+        const SizedBox(width: 10),
         Text(
           model.userName ?? '',
-          style: const TextStyle(color: Colors.black, fontSize: 12),
+          style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         const Spacer(),
-        IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
+        if (canDelete)
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'delete' && canDelete) {
+                cub.deletePost(postId);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+             const  PopupMenuItem<String>(
+                value: 'delete',
+                child: Text(
+                  'Delete',
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
 
-  Widget cardBody(CubitClass cub, PostModel model , int index) {
+  Widget cardBody(CubitClass cub, PostModel model, int index) {
     String postId = cub.postIds[index];
     return GestureDetector(
-      onDoubleTap: ()async {
-_onLikePressed(cub: cub, postId: postId);
-        },
+      onDoubleTap: () async {
+        _onLikePressed(cub: cub, postId: postId);
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          model.photo == null ||model.photo == '' ? const SizedBox() : Image.network(model.photo!),
+          model.photo == null || model.photo == ''
+              ? const SizedBox()
+              : Image.network(model.photo!),
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: GestureDetector(
@@ -130,9 +150,9 @@ _onLikePressed(cub: cub, postId: postId);
     String postId = cub.postIds[index];
     return Row(
       children: [
-       _onLikePressed(cub: cub, postId: postId) ,
+        _onLikePressed(cub: cub, postId: postId),
         Text(
-          cub.likes.isEmpty ? '' : cub.likes[index].toString() ,
+          cub.likes.isEmpty ? '' : cub.likes[index].toString(),
           style: const TextStyle(color: Colors.black),
         ),
         IconButton(
@@ -150,10 +170,11 @@ _onLikePressed(cub: cub, postId: postId);
       ],
     );
   }
+
   _onLikePressed({
-    required CubitClass cub ,
-    required String postId ,
-  }){
+    required CubitClass cub,
+    required String postId,
+  }) {
     return FutureBuilder<bool>(
       future: cub.hasLiked(postId),
       builder: (context, snapshot) {
@@ -163,12 +184,11 @@ _onLikePressed(cub: cub, postId: postId);
             await cub.postLikes(postId);
           },
           icon: Icon(
-            IconlyBroken.heart ,
+            IconlyBroken.heart,
             color: hasLiked ? defaultPurpleColor : Colors.grey,
           ),
         );
       },
     );
   }
-
 }

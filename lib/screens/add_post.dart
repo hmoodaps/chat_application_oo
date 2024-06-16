@@ -72,8 +72,7 @@ class AddPost extends StatelessWidget {
                         null;
                       } else if (cub.postPhoto != null &&
                           cub.postPhotoUrl != null) {
-                        cub
-                            .createPost(
+                        cub.createPost(
                                 text: textCo.text, photo: cub.postPhotoUrl)
                             .then((value) {
                           Navigator.pop(context);
@@ -193,15 +192,15 @@ class AddPost extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Expanded(
-                          child: Center(
-                              child: TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          '# Tags',
-                          style: TextStyle(color: Colors.purple),
-                        ),
-                      )))
+                      // Expanded(
+                      //     child: Center(
+                      //         child: TextButton(
+                      //   onPressed: () {},
+                      //   child: const Text(
+                      //     '# Tags',
+                      //     style: TextStyle(color: Colors.purple),
+                      //   ),
+                      // )))
                     ],
                   )
                 ],

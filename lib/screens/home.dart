@@ -78,9 +78,8 @@ class _HomeState extends State<Home> {
                 if (index != 2) {
                   cub.changBottomNavBarIndex(index);
                 } else if (index == 0) {
-                  cub.getPosts().then((value) {
-                    cub.changBottomNavBarIndex(index);
-                  });
+                  cub.getPosts();
+                  cub.changBottomNavBarIndex(index);
                 } else if (index == 1) {
                   cub.getAllUsers();
                   cub.changBottomNavBarIndex(index);

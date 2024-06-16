@@ -31,9 +31,7 @@ class CubitClass extends Cubit<AppState> {
   bool isDark = false;
 
   ThemeData? toggleLightAndDark(context) {
-    Brightness brightness = MediaQuery
-        .of(context)
-        .platformBrightness;
+    Brightness brightness = MediaQuery.of(context).platformBrightness;
     brightness == Brightness.dark
         ? (themeData = dark, isDark = true)
         : (themeData = light, isDark = false);
@@ -55,7 +53,7 @@ class CubitClass extends Cubit<AppState> {
   }
 
   List<dynamic> screens = [
-    const FirstScreen(),
+    FirstScreen(),
     const Chats(),
     const Hidden(),
     const Calls(),
@@ -85,45 +83,44 @@ class CubitClass extends Cubit<AppState> {
   changeFavIcon() {
     isFaveIconPressed
         ? faveIcon = Icon(
-      Icons.favorite,
-      color: defaultPurpleColor,
-    )
+            Icons.favorite,
+            color: defaultPurpleColor,
+          )
         : faveIcon = const Icon(
-      Icons.favorite_border,
-      color: Colors.grey,
-    );
+            Icons.favorite_border,
+            color: Colors.grey,
+          );
     emit(ChangFavIcon());
     return faveIcon;
   }
 
 //firebase setting============================================================================================================
 
-
   final _auth = FirebaseAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn(
     clientId:
-    '706942053414-bjepa4bsq8jr1648ncaptq7553n44ut2.apps.googleusercontent.com',
+        '706942053414-bjepa4bsq8jr1648ncaptq7553n44ut2.apps.googleusercontent.com',
   );
-
 
   Future<void> signInWithGoogle(context) async {
     showDialog(
         context: context,
-        builder: (context) =>
-        const Center(
-          child: CircularProgressIndicator(),
-        ));
+        builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ));
     try {
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       final GoogleSignInAuthentication googleAuth =
-      await googleUser!.authentication;
+          await googleUser!.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       await _auth.signInWithCredential(credential).then((value) async {
         createUser(
-            FirebaseAuth.instance.currentUser!.email!, FirebaseAuth.instance.currentUser!.displayName ?? 'New User', context,
+            FirebaseAuth.instance.currentUser!.email!,
+            FirebaseAuth.instance.currentUser!.displayName ?? 'New User',
+            context,
             model.userName);
         Navigator.pop(context);
         emit(LoggedInByGoogle(value: value));
@@ -178,21 +175,20 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-  addUser({
-    required context,
-    required String email,
-    required String pass,
-    required String name,
-    required String userName
-  }) {
+  addUser(
+      {required context,
+      required String email,
+      required String pass,
+      required String name,
+      required String userName}) {
     showDialog(
         context: context,
-        builder: (context) =>
-        const Center(
-          child: CircularProgressIndicator(),
-        ));
+        builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ));
     try {
-      _auth.createUserWithEmailAndPassword(email: email, password: pass)
+      _auth
+          .createUserWithEmailAndPassword(email: email, password: pass)
           .then((value) {
         createUser(email, name, userName, context);
       }).catchError((e) {
@@ -214,14 +210,14 @@ class CubitClass extends Cubit<AppState> {
   void createUser(String email, String name, String userName, context) async {
     Model model = Model(
       email: email,
-     // userName: userName,
+      // userName: userName,
       name: name,
       uid: FirebaseAuth.instance.currentUser!.uid,
       profilePhoto:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXksdu3aWAj1aBuoU5l7yOPx7SMr3Ee7HnAp7u4-TaJg&s',
       bio: 'Write your bio ..',
       backgroundPhoto:
-      'https://lectera.com/info/storage/img/20210805/fa586bb6c04bf0989d70_808xFull.jpg',
+          'https://lectera.com/info/storage/img/20210805/fa586bb6c04bf0989d70_808xFull.jpg',
     );
     try {
       await FirebaseFirestore.instance
@@ -248,7 +244,6 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-
   // Future<bool> isUsernameTaken(String username) async {
   //   var querySnapshot = await FirebaseFirestore.instance
   //       .collection('users')
@@ -263,8 +258,7 @@ class CubitClass extends Cubit<AppState> {
   Model model = Model();
 
   getData() async {
-    await FirebaseFirestore
-        .instance
+    await FirebaseFirestore.instance
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .get()
@@ -330,10 +324,7 @@ class CubitClass extends Cubit<AppState> {
     }
     await FirebaseStorage.instance
         .ref(
-        'users/profilePhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri
-            .file(profilePhoto!.path)
-            .pathSegments
-            .last}')
+            'users/profilePhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(profilePhoto!.path).pathSegments.last}')
         .putFile(profilePhoto)
         .then((value) {
       value.ref.getDownloadURL().then((value) {
@@ -356,10 +347,7 @@ class CubitClass extends Cubit<AppState> {
     }
     await FirebaseStorage.instance
         .ref(
-        'users/backgroundPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri
-            .file(backGroundPhoto!.path)
-            .pathSegments
-            .last}')
+            'users/backgroundPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(backGroundPhoto!.path).pathSegments.last}')
         .putFile(backGroundPhoto)
         .then((value) {
       value.ref.getDownloadURL().then((value) {
@@ -377,13 +365,15 @@ class CubitClass extends Cubit<AppState> {
   }
 
   //update profile ============================
-  Future<void> updateProfile({String? name,
-    String? profilePhotoUrl,
-    String? backgroundPhotoUrl,
-    String? bio}) async {
+  Future<void> updateProfile(
+      {String? name,
+      String? profilePhotoUrl,
+      String? backgroundPhotoUrl,
+      String? bio}) async {
     Model thisModel = Model(
       email: FirebaseAuth.instance.currentUser!.email,
-     // userName: name ?? model.userName,
+      name: name ?? model.userName,
+      // userName: name ?? model.userName,
       profilePhoto: profilePhotoUrl ?? model.profilePhoto,
       bio: bio ?? model.bio,
       backgroundPhoto: backgroundPhotoUrl ?? model.backgroundPhoto,
@@ -439,10 +429,7 @@ class CubitClass extends Cubit<AppState> {
     emit(UploadPostPhoto());
     await FirebaseStorage.instance
         .ref(
-        'users/PostsPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri
-            .file(postPhoto!.path)
-            .pathSegments
-            .last}')
+            'users/PostsPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(postPhoto!.path).pathSegments.last}')
         .putFile(postPhoto)
         .then((value) {
       value.ref.getDownloadURL().then((value) {
@@ -465,49 +452,45 @@ class CubitClass extends Cubit<AppState> {
     String? text,
   }) async {
     emit(CreatingPostLoading());
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(model.uid)
-        .get()
-        .then((value) async {
+
+    try {
+      // استعلام Firestore للمستخدم
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(model.uid)
+          .get();
+
+      // بيانات المستخدم من Firestore
+      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+      // إنشاء نموذج PostModel
       PostModel postModel = PostModel(
-        userName: value['name'],
-        profilePhoto: value['profilePhoto'],
+        userName: userData['name'],
+        dateTime: DateTime.now(),
+        // استخدام DateTime هنا
+        profilePhoto: userData['profilePhoto'],
         uid: model.uid,
         photo: postPhotoUrl,
         text: text,
       );
 
-      if (postPhoto == null) {
-        postPhotoUrl == '';
-        emit(CreatingPost());
-        await FirebaseFirestore.instance
-            .collection('posts')
-            .add(postModel.toMap())
-            .then((value) {
-          emit(PostCreatedSuccessfully());
-        }).catchError((error) {
-          if (kDebugMode) {
-            print(error.toString());
-          }
-          emit(PostCreatedFailed());
-        });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('posts')
-            .add(postModel.toMap())
-            .then((value) {
-          emit(PostWithPhotoCreatedSuccessfully());
-        }).catchError((error) {
-          if (kDebugMode) {
-            print(error.toString());
-          }
-          emit(PostCreatedFailed());
-        }).whenComplete(() {
-          emit(CreatingPostLoadingDone());
-        });
+      // إضافة المنشور إلى Firestore
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .add(postModel.toMap());
+
+      // إصدار حدث بنجاح الإنشاء
+      emit(PostCreatedSuccessfully());
+    } catch (error) {
+      // إصدار حدث فشل الإنشاء مع تسجيل الخطأ
+      if (kDebugMode) {
+        print(error.toString());
       }
-    });
+      emit(PostCreatedFailed());
+    } finally {
+      // إصدار حدث اكتمال عملية الإنشاء
+      emit(CreatingPostLoadingDone());
+    }
   }
 
   // deletePhotoFromThePost==============================================================
@@ -522,7 +505,7 @@ class CubitClass extends Cubit<AppState> {
   List<int> likes = [];
 
   getPosts() async {
-    await FirebaseFirestore.instance.collection('posts') .orderBy('date', descending: false).get().then((value) {
+    await FirebaseFirestore.instance.collection('posts').get().then((value) {
       for (var e in value.docs) {
         String postId = e.id;
         if (!postIds.contains(postId)) {
@@ -539,6 +522,17 @@ class CubitClass extends Cubit<AppState> {
         print(error.toString());
       }
       emit(GettingPostsError());
+    });
+  }
+
+  deletePost(String postId) async {
+    await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .delete()
+        .then((value) async {
+      await getPosts();
+      emit(DeletePost());
     });
   }
 
@@ -583,7 +577,6 @@ class CubitClass extends Cubit<AppState> {
         .get();
     return docSnapshot.exists;
   }
-
 
   List<Model> allUsers = [];
 
@@ -648,13 +641,18 @@ class CubitClass extends Cubit<AppState> {
     required String date,
     required String message,
   }) {
-    MessageModel messageModel = MessageModel(date: DateTime.now().toString(),
+    MessageModel messageModel = MessageModel(
+        date: DateTime.now().toString(),
         message: message,
         receiverUid: receiverUid,
         senderUid: FirebaseAuth.instance.currentUser!.uid);
-    FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid)
-        .collection('chats').doc(receiverUid).collection('messages').add(
-        messageModel.toMap())
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('chats')
+        .doc(receiverUid)
+        .collection('messages')
+        .add(messageModel.toMap())
         .then((value) {
       emit(SendMessageSuccess());
     }).catchError((error) {
@@ -663,9 +661,14 @@ class CubitClass extends Cubit<AppState> {
         print(error.toString());
       }
     });
-    FirebaseFirestore.instance.collection('users').doc(receiverUid).collection(
-        'chats').doc(FirebaseAuth.instance.currentUser!.uid).collection('messages').add(
-        messageModel.toMap()).then((value) {
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(receiverUid)
+        .collection('chats')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('messages')
+        .add(messageModel.toMap())
+        .then((value) {
       emit(SendMessageSuccess());
     }).catchError((error) {
       emit(SendMessageError());
@@ -675,12 +678,17 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
-  List <MessageModel> messageModelList = [];
+  List<MessageModel> messageModelList = [];
 
   getMessages(String receiverUid) {
-    FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid)
-        .collection('chats').doc(receiverUid).collection('messages')
-        .orderBy('date', descending: false) // ترتيب الرسائل حسب الوقت بشكل تصاعدي
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('chats')
+        .doc(receiverUid)
+        .collection('messages')
+        .orderBy('date',
+            descending: false) // ترتيب الرسائل حسب الوقت بشكل تصاعدي
         .snapshots()
         .listen((event) {
       messageModelList = [];
@@ -691,5 +699,5 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
-
+  deleteChat() {}
 }

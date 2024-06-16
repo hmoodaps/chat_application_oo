@@ -47,7 +47,7 @@ class EditProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     CubitClass cub = CubitClass.get(context);
-    userNameCo.text = cub.model.userName ?? '';
+    userNameCo.text = cub.model.name ?? '';
     bioCo.text = cub.model.bio ?? '';
     return BlocConsumer<CubitClass, AppState>(
         builder: (context, state) {
@@ -55,7 +55,8 @@ class EditProfile extends StatelessWidget {
             appBar: AppBar(
               actions: [
                 TextButton(onPressed: () {
-                  cub.updateProfile(name: userNameCo.text,
+                  cub.updateProfile(
+                      name: userNameCo.text,
                       profilePhotoUrl: cub.profilePhotoUrl,
                       backgroundPhotoUrl: cub.backgroundPhotoUrl,
                       bio: bioCo.text);
