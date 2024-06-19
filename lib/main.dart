@@ -2,10 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import '../cubit/appstates.dart';
-import '../cubit/cubit.dart';
-import '../backend_screens/auth_service.dart';
-import '../screens/home.dart';
+import 'cubit/appstates.dart';
+import 'cubit/cubit.dart';
+import 'backend_screens/auth_service.dart';
+import 'screens/home.dart';
 
 
 Future<void> main() async {

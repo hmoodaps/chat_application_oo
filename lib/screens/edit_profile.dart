@@ -1,6 +1,8 @@
+
 import 'package:chat_application/components/components.dart';
 import 'package:chat_application/cubit/appstates.dart';
 import 'package:chat_application/cubit/cubit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconly/iconly.dart';
@@ -43,12 +45,14 @@ class EditProfile extends StatelessWidget {
 
   final TextEditingController userNameCo = TextEditingController();
   final TextEditingController bioCo = TextEditingController();
+  final TextEditingController emailCo = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     CubitClass cub = CubitClass.get(context);
     userNameCo.text = cub.model.name ?? '';
     bioCo.text = cub.model.bio ?? '';
+    emailCo.text = cub.model.email ?? FirebaseAuth.instance.currentUser!.email!;
     return BlocConsumer<CubitClass, AppState>(
         builder: (context, state) {
           return Scaffold(
@@ -172,7 +176,25 @@ class EditProfile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(
-                    height: 20,
+                    height: 30,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: TextFormField(
+                      readOnly: true,
+                      enabled: false,
+                      controller:emailCo ,
+                      decoration: const InputDecoration(
+                        labelText: 'Email Adress',
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.orangeAccent,
+                          ),
+                        ),                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 25,
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -182,6 +204,7 @@ class EditProfile extends StatelessWidget {
                       borderColorOnNotFocus:
                       cub.isDark ? defaultBlueColor : Colors.orange,
                       labelText: 'UserName',
+                      labelColor: cub.isDark ? Colors.blue : Colors.black,
                       maxLength: 15,
                       textColorIfFieldEnable: cub.isDark ? Colors.white:Colors.black,
                     ),

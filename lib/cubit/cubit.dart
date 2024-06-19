@@ -1,10 +1,8 @@
 import 'dart:io';
-
 import 'package:chat_application/components/components.dart';
 import 'package:chat_application/model/message_model.dart';
 import 'package:chat_application/model/model.dart';
 import 'package:chat_application/model/post_model.dart';
-import 'package:chat_application/screens/calls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -14,7 +12,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../screens/chats.dart';
 import '../screens/firstscreen.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import '../screens/hidden.dart';
 import '../screens/profile.dart';
 import 'appstates.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,16 +45,10 @@ class CubitClass extends Cubit<AppState> {
     emit(ChangBottomNavBarIndex());
   }
 
-  changPage(GlobalKey<ScaffoldState> scaffoldKey) {
-    scaffoldKey.currentState!.openDrawer();
-  }
-
   List<dynamic> screens = [
-    FirstScreen(),
+   const  FirstScreen(),
     const Chats(),
-    const Hidden(),
-    const Calls(),
-    Profile(),
+    const Profile(),
   ];
 
 //Home card setting=====================================================================================================
@@ -121,7 +112,7 @@ class CubitClass extends Cubit<AppState> {
             FirebaseAuth.instance.currentUser!.email!,
             FirebaseAuth.instance.currentUser!.displayName ?? 'New User',
             context,
-            model.userName);
+            );
         Navigator.pop(context);
         emit(LoggedInByGoogle(value: value));
       });
@@ -180,7 +171,7 @@ class CubitClass extends Cubit<AppState> {
       required String email,
       required String pass,
       required String name,
-      required String userName}) {
+      }) {
     showDialog(
         context: context,
         builder: (context) => const Center(
@@ -190,7 +181,7 @@ class CubitClass extends Cubit<AppState> {
       _auth
           .createUserWithEmailAndPassword(email: email, password: pass)
           .then((value) {
-        createUser(email, name, userName, context);
+        createUser(email, name, context);
       }).catchError((e) {
         Navigator.pop(context);
         if (kDebugMode) {
@@ -207,8 +198,8 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-  void createUser(String email, String name, String userName, context) async {
-    Model model = Model(
+  void createUser(String email, String name, context) async {
+    UserModel model = UserModel(
       email: email,
       // userName: userName,
       name: name,
@@ -244,18 +235,11 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-  // Future<bool> isUsernameTaken(String username) async {
-  //   var querySnapshot = await FirebaseFirestore.instance
-  //       .collection('users')
-  //       .where('userName', isEqualTo: username)
-  //       .get();
-  //
-  //   return querySnapshot.docs.isNotEmpty;
-  // }
+
 
   //getting data from firebase
 
-  Model model = Model();
+  UserModel model = UserModel();
 
   getData() async {
     await FirebaseFirestore.instance
@@ -263,9 +247,9 @@ class CubitClass extends Cubit<AppState> {
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .get()
         .then((value) {
-      model = Model.fromJson(value.data()!);
+      model = UserModel.fromJson(value.data()!);
       emit(FetchUserData(
-          model: Model(
+          model: UserModel(
               email: model.email,
               //userName: model.userName,
               name: model.name,
@@ -370,9 +354,9 @@ class CubitClass extends Cubit<AppState> {
       String? profilePhotoUrl,
       String? backgroundPhotoUrl,
       String? bio}) async {
-    Model thisModel = Model(
+    UserModel thisModel = UserModel(
       email: FirebaseAuth.instance.currentUser!.email,
-      name: name ?? model.userName,
+      name: name ?? model.name,
       // userName: name ?? model.userName,
       profilePhoto: profilePhotoUrl ?? model.profilePhoto,
       bio: bio ?? model.bio,
@@ -393,198 +377,13 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
-  //deletePreviousPhoto =====================================================================
-  Future<void> _deletePreviousPhoto(String photoUrl) async {
-    try {
-      await FirebaseStorage.instance.refFromURL(photoUrl).delete();
-    } catch (error) {
-      if (kDebugMode) {
-        print('Error deleting previous photo: $error');
-      }
-    }
-  }
-
-  //posts handling ======================================================================
-  //Image Picker==============
-  File? postPhoto;
-
-  Future<void> getPostPhoto() async {
-    final ImagePicker picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      postPhoto = File(image.path);
-      emit(GetPostPhotoSuccess());
-    } else {
-      if (kDebugMode) {
-        print('No Image Selected');
-      }
-      emit(GetPostPhotoFailed());
-    }
-  }
-
-//upload post photo to the firebase ================================================================
-  String? postPhotoUrl;
-
-  Future<void> uploadPostPhoto(File? postPhoto) async {
-    emit(UploadPostPhoto());
-    await FirebaseStorage.instance
-        .ref(
-            'users/PostsPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(postPhoto!.path).pathSegments.last}')
-        .putFile(postPhoto)
-        .then((value) {
-      value.ref.getDownloadURL().then((value) {
-        postPhotoUrl = value;
-        emit(PhotoUploaded());
-      }).catchError((error) {
-        if (kDebugMode) {
-          print(error);
-        }
-      });
-    }).catchError((error) {
-      if (kDebugMode) {
-        print(error.toString());
-      }
-    });
-  }
-
-  Future<void> createPost({
-    String? photo,
-    String? text,
-  }) async {
-    emit(CreatingPostLoading());
-
-    try {
-      // استعلام Firestore للمستخدم
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(model.uid)
-          .get();
-
-      // بيانات المستخدم من Firestore
-      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-
-      // إنشاء نموذج PostModel
-      PostModel postModel = PostModel(
-        userName: userData['name'],
-        dateTime: DateTime.now(),
-        // استخدام DateTime هنا
-        profilePhoto: userData['profilePhoto'],
-        uid: model.uid,
-        photo: postPhotoUrl,
-        text: text,
-      );
-
-      // إضافة المنشور إلى Firestore
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .add(postModel.toMap());
-
-      // إصدار حدث بنجاح الإنشاء
-      emit(PostCreatedSuccessfully());
-    } catch (error) {
-      // إصدار حدث فشل الإنشاء مع تسجيل الخطأ
-      if (kDebugMode) {
-        print(error.toString());
-      }
-      emit(PostCreatedFailed());
-    } finally {
-      // إصدار حدث اكتمال عملية الإنشاء
-      emit(CreatingPostLoadingDone());
-    }
-  }
-
-  // deletePhotoFromThePost==============================================================
-  deletePhotoFromThePost() {
-    postPhoto = null;
-    emit(DeletePhotoFromThePost());
-  }
-
-//get posts===========================================================
-  List<PostModel> posts = [];
-  List<String> postIds = [];
-  List<int> likes = [];
-
-  getPosts() async {
-    await FirebaseFirestore.instance.collection('posts').get().then((value) {
-      for (var e in value.docs) {
-        String postId = e.id;
-        if (!postIds.contains(postId)) {
-          posts.add(PostModel.fromJson(e.data()));
-          postIds.add(postId);
-        }
-        e.reference.collection('likes').get().then((value) {
-          likes.add(value.docs.length);
-        });
-      }
-      emit(GettingPostsDone());
-    }).catchError((error) {
-      if (kDebugMode) {
-        print(error.toString());
-      }
-      emit(GettingPostsError());
-    });
-  }
-
-  deletePost(String postId) async {
-    await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .delete()
-        .then((value) async {
-      await getPosts();
-      emit(DeletePost());
-    });
-  }
-
-  postLikes(String postId) async {
-    var docRef = FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('likes')
-        .doc(model.uid);
-    var getDocs = await docRef.get();
-    if (getDocs.exists) {
-      docRef.delete();
-    } else {
-      docRef.set({'likes': true});
-    }
-
-    updateLikes(postId);
-  }
-
-  updateLikes(String postId) async {
-    var likesSnapshot = await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('likes')
-        .get();
-
-    int likeCount = likesSnapshot.docs.length;
-
-    int postIndex = postIds.indexOf(postId);
-    if (postIndex != -1) {
-      likes[postIndex] = likeCount;
-      emit(LikeSuccess());
-    }
-  }
-
-  Future<bool> hasLiked(String postId) async {
-    var docSnapshot = await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('likes')
-        .doc(model.uid)
-        .get();
-    return docSnapshot.exists;
-  }
-
-  List<Model> allUsers = [];
+  List<UserModel> allUsers = [];
 
   getAllUsers() async {
     await FirebaseFirestore.instance.collection('users').get().then((value) {
       for (var element in value.docs) {
         if (element.data()['uid'] != FirebaseAuth.instance.currentUser!.uid) {
-          allUsers.add(Model.fromJson(element.data()));
+          allUsers.add(UserModel.fromJson(element.data()));
           emit(SuccessGettingAllUser());
         }
       }
@@ -592,49 +391,6 @@ class CubitClass extends Cubit<AppState> {
       emit(ErrorGettingAllUser());
     });
   }
-
-  //friends =======================================================
-//create friends collection in the firebase ===
-
-  // Future<void> sendFriendRequest( String friendUserId) async {
-  //   await FirebaseFirestore.instance.collection('friendRequests').add({
-  //     'from': FirebaseAuth.instance.currentUser!.uid,
-  //     'to': friendUserId,
-  //     'status': 'pending', // حالة الطلب، يمكن أن تكون 'pending'، 'accepted'، أو 'rejected'
-  //     'timestamp': FieldValue.serverTimestamp(),
-  //   });
-  // }
-  // Stream<QuerySnapshot> getIncomingFriendRequests(String currentUserId) {
-  //   return FirebaseFirestore.instance
-  //       .collection('friendRequests')
-  //       .where('to', isEqualTo: currentUserId)
-  //       .where('status', isEqualTo: 'pending')
-  //       .snapshots();
-  // }
-  // Future<void> acceptFriendRequest(String requestId, String currentUserId, String friendUserId) async {
-  //   // تحديث حالة الطلب إلى 'accepted'
-  //   await FirebaseFirestore.instance.collection('friendRequests').doc(requestId).update({
-  //     'status': 'accepted',
-  //   });
-  //
-  //   // إضافة المستخدمين إلى قائمة الأصدقاء
-  //   await FirebaseFirestore.instance.collection('friends').doc(currentUserId).collection('userFriends').doc(friendUserId).set({});
-  //   await FirebaseFirestore.instance.collection('friends').doc(friendUserId).collection('userFriends').doc(currentUserId).set({});
-  // }
-  //
-  // Future<void> rejectFriendRequest(String requestId) async {
-  //   // تحديث حالة الطلب إلى 'rejected'
-  //   await FirebaseFirestore.instance.collection('friendRequests').doc(requestId).update({
-  //     'status': 'rejected',
-  //   });
-  // }
-  // Stream<QuerySnapshot> getFriends(String currentUserId) {
-  //   return FirebaseFirestore.instance
-  //       .collection('friends')
-  //       .doc(currentUserId)
-  //       .collection('userFriends')
-  //       .snapshots();
-  // }
 
   sendMessage({
     required String receiverUid,
@@ -699,5 +455,298 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
-  deleteChat() {}
+
+  // posts ===============================================================================================================================
+  //create post =======================================================================================
+  Future<void> createPost({
+    String? photo,
+    String? text,
+  }) async {
+    emit(CreatingPostLoading());
+    try {
+      // استخدام doc() لإنشاء معرف عشوائي جديد
+      var postRef = FirebaseFirestore.instance.collection('posts').doc();
+      // الهوية الفريدة للمستند الذي تم إنشاؤه
+      String postId = postRef.id;
+      // إنشاء نموذج PostModel بدون قائمة الإعجاب حاليًا
+      PostModel postModel = PostModel(
+        dateTime: DateTime.now(),
+        postId: postId,
+        uid: _auth.currentUser!.uid,
+        photo: photo,
+        text: text,
+      );
+      await FirebaseFirestore.instance.collection('posts').doc(postId).set(postModel.toMap()).then((value)async{
+        emit(PostCreated());
+
+      });
+      emit(PostCreatedSuccessfully());
+
+    } catch (error) {
+      // إصدار حدث فشل الإنشاء مع تسجيل الخطأ
+      if (kDebugMode) {
+        print(error.toString());
+      }
+      emit(PostCreatedFailed());
+    } finally {
+      // إصدار حدث اكتمال عملية الإنشاء
+      emit(CreatingPostLoadingDone());
+    }
+  }
+
+
+  //delete post =======================================================================================
+  deletePost(String postId) async {
+    await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .delete()
+        .then((value) async {
+      await getPosts();
+      emit(DeletePost());
+    });
+    emit(DeletePostSuccess());
+  }
+
+  //post photos =======================================================================================
+  //upload post photo to the firebase ================================================================
+  String? postPhotoUrl;
+
+  Future<void> uploadPostPhoto(File? postPhoto) async {
+    emit(UploadPostPhoto());
+    await FirebaseStorage.instance
+        .ref(
+            'users/PostsPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(postPhoto!.path).pathSegments.last}')
+        .putFile(postPhoto)
+        .then((value) {
+      value.ref.getDownloadURL().then((value) {
+        postPhotoUrl = value;
+        emit(PhotoUploaded());
+      }).catchError((error) {
+        if (kDebugMode) {
+          print(error);
+        }
+      });
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+
+  //delete photo from the post ====================================================================
+  deletePhotoFromThePost() {
+    postPhoto = null;
+    emit(DeletePhotoFromThePost());
+  }
+
+  //deletePreviousPhoto =====================================================================
+  Future<void> _deletePreviousPhoto(String photoUrl) async {
+    try {
+      await FirebaseStorage.instance.refFromURL(photoUrl).delete();
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error deleting previous photo: $error');
+      }
+    }
+  }
+
+  //Image Picker==============
+  File? postPhoto;
+
+  Future<void> getPostPhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      postPhoto = File(image.path);
+      emit(GetPostPhotoSuccess());
+    } else {
+      if (kDebugMode) {
+        print('No Image Selected');
+      }
+      emit(GetPostPhotoFailed());
+    }
+  }
+
+  //getPosts ======================================================================================
+  List<PostModel> posts = [];
+  List<PostModel> myPosts = [] ;
+  List<UserModel> fans = [];
+
+
+  getPosts() async {
+    posts.clear();
+    emit(GettingPostsLoading());
+    try {
+       await FirebaseFirestore.instance.collection('posts').get().then((value){
+         for (var e in value.docs) {
+           PostModel  thisPost = PostModel.fromJson(e.data());
+           if(!posts.contains(thisPost))
+          {
+            posts.add(thisPost) ;
+            updateLikes(thisPost.postId!);
+          }
+         }
+         emit(GettingPostsSuccess());
+       });
+       getMyPosts();
+       emit(GettingPostsDone());
+    } catch (error) {
+      emit(GettingPostsError());
+      if (kDebugMode) {
+        print('Error getting posts: $error');
+      }
+    }
+  }
+  getMyPosts() async {
+    myPosts.clear();
+    emit(GettingMyPostsLoading());
+    try {
+       await FirebaseFirestore.instance.collection('posts').get().then((value){
+         for (var e in value.docs) {
+           PostModel  thisPost = PostModel.fromJson(e.data());
+           if(!myPosts.contains(thisPost) && thisPost.uid==_auth.currentUser!.uid)
+          {
+            myPosts.add(thisPost) ;
+            updateLikes(thisPost.postId!);
+          }
+         }
+         emit(GettingMyPostsSuccess());
+       });
+       emit(GettingMyPostsDone());
+    } catch (error) {
+      emit(GettingPostsError());
+      if (kDebugMode) {
+        print('Error getting posts: $error');
+      }
+    }
+  }
+
+  Future<void> postLikes({
+    required String postId,
+  }) async {
+    try {
+      String currentUserId = _auth.currentUser!.uid;
+      bool hasLike = await hasLiked(postId);
+
+      if (hasLike) {
+        // إذا كان المستخدم قد قام بالإعجاب، عليك إزالته
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(postId)
+            .collection('likes')
+            .doc(currentUserId)
+            .delete();
+      } else {
+        // إضافة الإعجاب إذا لم يكن المستخدم قد قام بالإعجاب
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(postId)
+            .collection('likes')
+            .doc(currentUserId)
+            .set(model.toMap());
+      }
+
+      // بعد ذلك، يجب تحديث عدد الإعجابات في مودل البوست
+      await updateLikes(postId);
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error liking post: $error');
+      }
+    }
+  }
+
+  Future<void> updateLikes(String postId) async {
+    try {
+      var likesSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .get();
+
+      List<String> likedUserIds = [];
+      for (var doc in likesSnapshot.docs) {
+        likedUserIds.add(doc.id);
+      }
+
+      // تحديث مودل البوست في قائمة الإعجابات
+      var postIndex = posts.indexWhere((post) => post.postId == postId);
+      if (postIndex != -1) {
+        posts[postIndex].likesUserIds = likedUserIds;
+      }
+      var myPostIndex = myPosts.indexWhere((post) => post.postId == postId);
+      if (myPostIndex != -1) {
+        myPosts[myPostIndex].likesUserIds = likedUserIds;
+      }
+
+
+      // إعلام التطبيق بنجاح التحديث
+      emit(LikeSuccess());
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error updating likes: $error');
+      }
+    }
+  }
+
+  Future<bool> hasLiked(String postId, ) async {
+    try {
+      var docSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(_auth.currentUser!.uid)
+          .get();
+      return docSnapshot.exists;
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error checking like: $error');
+      }
+      return false;
+    }
+  }
+//get posts fans =================================================================================
+  Future<void> getFans(String postID) async {
+    fans.clear();
+    try {
+      final value = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postID)
+          .collection('likes')
+          .get();
+
+      for (var e in value.docs) {
+        UserModel user = await getUserInfo(e.id);
+        if (!fans.contains(user)) {
+          fans.add(user);
+        }
+      }
+      emit(GetFans());
+    } catch (error) {
+      // معالجة الخطأ هنا إذا لزم الأمر
+    }
+  }
+
+
+  //get user by uid ==========================================================
+  Future<UserModel> getUserInfo(String userID) async {
+    UserModel user;
+    try {
+      DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userID)
+          .get();
+      Map<String, dynamic>? userData = snapshot.data();
+      if (userData != null) {
+        user = UserModel.fromJson(userData);
+      } else {
+        throw Exception('User data not found');
+      }
+    } catch (e) {
+      throw Exception('Failed to get user data: $e');
+    }
+    return user;
+  }
+
+
 }

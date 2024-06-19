@@ -43,15 +43,6 @@ class AddPost extends StatelessWidget {
     );
   }
 
-  _showLoadingDialog(context) {
-    showDialog(
-        context: context,
-        builder: (context) => const AlertDialog(
-              content: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ));
-  }
 
   @override
   Widget build(BuildContext context) {

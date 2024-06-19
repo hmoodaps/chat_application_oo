@@ -12,7 +12,6 @@ class Register extends StatelessWidget {
 
   final void Function()? onLoginPressed;
   final TextEditingController emailCo = TextEditingController();
-  final TextEditingController userNameCo = TextEditingController();
   final TextEditingController passCo = TextEditingController();
   final TextEditingController repassCo = TextEditingController();
   final TextEditingController nameCo = TextEditingController();
@@ -229,7 +228,6 @@ class Register extends StatelessWidget {
                                       email: emailCo.text,
                                       pass: passCo.text,
                                       name: nameCo.text,
-                                      userName: userNameCo.text,
                                     );
                                   }
                                 },

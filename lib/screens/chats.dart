@@ -43,7 +43,7 @@ class Chats extends StatelessWidget {
     );
   }
 
-  _chatItemsBuilder(Model model , CubitClass cub , context) {
+  _chatItemsBuilder(UserModel model , CubitClass cub , context) {
     return  Padding(
         padding: const EdgeInsets.all(10),
         child: InkWell(

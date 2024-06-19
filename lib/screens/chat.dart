@@ -8,10 +8,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconly/iconly.dart';
 import 'package:flutter_statusbarcolor_ns/flutter_statusbarcolor_ns.dart';
 
+import '../components/components.dart';
 import '../model/model.dart';
+import '../model/post_model.dart';
+import 'his_profile.dart';
 
 class Chat extends StatelessWidget {
-  final Model? model;
+  final UserModel? model;
   final ScrollController scrollController = ScrollController();
 
   Chat({super.key, required this.model});
@@ -41,20 +44,39 @@ class Chat extends StatelessWidget {
         },
         builder: (context, state) => Scaffold(
           appBar: AppBar(
-            title: Row(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(model!.profilePhoto ?? ''),
-                  radius: 20,
-                ),
-                const SizedBox(
-                  width: 8,
-                ),
-                Text(
-                  model!.name ?? '',
-                  style: const TextStyle(fontSize: 15),
-                ),
-              ],
+            title: InkWell(
+              onTap: () async {
+
+                showDialog(context: context, builder: (context)=>const Center(child: CircularProgressIndicator(),));
+                List<PostModel> hisPosts = [];
+                for(var e in cub.posts){
+                  if(e.uid == model!.uid && !hisPosts.contains(e)){
+                    hisPosts.add(e);
+                  }
+                }
+                if(model!.uid == cub.model.uid){
+                  cub.changBottomNavBarIndex(4);
+                }else{
+                  navigatorTo(context, HisProfile(model: model!, posts: hisPosts));
+
+                }
+                Navigator.pop(context);
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(model!.profilePhoto ?? ''),
+                    radius: 20,
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  Text(
+                    model!.name ?? '',
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                ],
+              ),
             ),
             leading: IconButton(
               onPressed: () {
