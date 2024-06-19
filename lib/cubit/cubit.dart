@@ -574,8 +574,9 @@ class CubitClass extends Cubit<AppState> {
   List<UserModel> fans = [];
 
 
-  getPosts() async {
+  Future getPosts() async {
     posts.clear();
+    getAllUsers();
     emit(GettingPostsLoading());
     try {
        await FirebaseFirestore.instance.collection('posts').get().then((value){
