@@ -6,6 +6,7 @@ import 'cubit/appstates.dart';
 import 'cubit/cubit.dart';
 import 'backend_screens/auth_service.dart';
 import 'screens/home.dart';
+import 'screens/first_at_all.dart';
 
 
 Future<void> main() async {
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: cub.toggleLightAndDark(context),
-              home:const AuthPage(),
+              home:const  FirstAtAll(),
               // const AuthPage(),
               //RegisterByGooglePage(),
               // const AuthPage(),

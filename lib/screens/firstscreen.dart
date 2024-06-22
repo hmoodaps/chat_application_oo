@@ -17,18 +17,14 @@ class FirstScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     CubitClass cub = CubitClass.get(context);
-    cub.posts.sort((a, b) => b.dateTime!.compareTo(a.dateTime!));
-
     return BlocConsumer<CubitClass, AppState>(
       builder: (context, state) => ConditionalBuilder(
         condition: cub.posts.isNotEmpty,
         builder: (context) {
-          return ListView.separated(
-            reverse: false,
-            itemBuilder: (context, index) =>
-                _postItemBuilder(cub, context, index),
-            separatorBuilder: (context, index) => const SizedBox(height: 25),
+          return ListView.builder(
             itemCount: cub.posts.length,
+            itemBuilder: (context, index) =>
+                _postItemBuilder(cub, context, cub.posts.reversed.toList()[index]),
           );
         },
         fallback: (context) => Center(
@@ -40,52 +36,47 @@ class FirstScreen extends StatelessWidget {
           ),
         ),
       ),
-      listener: (context, state) {},
+      listener: (context, state) {
+
+      },
     );
   }
-  Widget _postItemBuilder(CubitClass cub, BuildContext context, int index) {
+
+  Widget _postItemBuilder(CubitClass cub, BuildContext context, PostModel post) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Card(
         child: Column(
           children: [
             FutureBuilder<UserModel>(
-                future: cub.getUserInfo(cub.posts[index].uid!),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const SizedBox();
-                  } else {
-                    UserModel user = snapshot.data!;
-                    return _postHeader(
-                        context, user, index, cub.posts[index], cub);
-                  }
-                }),
-            _cardBody(cub, cub.posts[index], context),
-            _cardBottom(cub, index, cub.posts[index])
+              future: cub.getUserInfo(post.uid!),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox();
+                } else {
+                  UserModel user = snapshot.data!;
+                  return _postHeader(context, user, post, cub);
+                }
+              },
+            ),
+            _cardBody(cub, post, context),
+            _cardBottom(cub, post),
           ],
         ),
       ),
     );
   }
 
-  Widget _postHeader(
-      context, UserModel user, int index, PostModel model, CubitClass cub) {
-    bool canDel = false;
-    if (FirebaseAuth.instance.currentUser!.uid == model.uid) canDel = true;
+  Widget _postHeader(BuildContext context, UserModel user, PostModel post, CubitClass cub) {
+    bool canDel = FirebaseAuth.instance.currentUser!.uid == post.uid;
     return InkWell(
       onTap: () async {
-        showDialog(context: context, builder: (context)=>const Center(child: CircularProgressIndicator(),));
-        List<PostModel> hisPosts = [];
-        for(var e in cub.posts){
-          if(e.uid == user.uid && !hisPosts.contains(e)){
-            hisPosts.add(e);
-          }
-        }
-        if(user.uid == cub.model.uid){
-          cub.changBottomNavBarIndex(4);
-        }else{
-          navigatorTo(context, HisProfile(model: user, posts: hisPosts));
 
+        List<PostModel> hisPosts = cub.posts.where((e) => e.uid == user.uid).toList();
+        if (user.uid == cub.model.uid) {
+          cub.changBottomNavBarIndex(2);
+        } else {
+          navigatorTo(context, HisProfile(model: user, posts: hisPosts));
         }
       },
       child: Card(
@@ -104,11 +95,10 @@ class FirstScreen extends StatelessWidget {
             PopupMenuButton<String>(
               icon: const Icon(Icons.menu),
               onSelected: (value) async {
-                if (value == 'delete' && canDel == true) {
-                  _handleDeletePost(model, cub);
+                if (value == 'delete' && canDel) {
+                  _handleDeletePost(post, cub);
                 } else if (value == 'likes') {
-                  _handleShowLikes(context, cub, model,user);
-
+                  _handleShowLikes(context, cub, post, user);
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -116,14 +106,13 @@ class FirstScreen extends StatelessWidget {
                   value: 'delete',
                   child: Text(
                     'Delete',
-                    style: TextStyle(color: canDel ? Colors.black : Colors.white),
+                    style: TextStyle(color: canDel ? Colors.black : Colors.grey),
                   ),
                 ),
                 const PopupMenuItem<String>(
                   value: 'likes',
                   child: Text('Likes'),
                 ),
-
               ],
             ),
           ],
@@ -132,76 +121,72 @@ class FirstScreen extends StatelessWidget {
     );
   }
 
-  void _handleDeletePost(PostModel model, CubitClass cub) {
-    cub.deletePost(model.postId!);
+  void _handleDeletePost(PostModel post, CubitClass cub) {
+    cub.deletePost(post.postId!);
   }
 
-  _handleShowLikes(context, CubitClass cub, PostModel model , UserModel user) {
-    cub.getFans(model.postId!).then((value){
+  void _handleShowLikes(BuildContext context, CubitClass cub, PostModel post, UserModel user) {
+    cub.getFans(post.postId!).then((value) {
       showModalBottomSheet(
-
-          backgroundColor: Colors.white,
-          context: context,
-          builder: (context) => _likerDialog(context, cub, model,));
+        backgroundColor: Colors.white,
+        context: context,
+        builder: (context) => _likerDialog(context, cub, post),
+      );
     });
-
   }
 
-
-  _likerDialog(BuildContext context, CubitClass cub, PostModel model ) {
+  Widget _likerDialog(BuildContext context, CubitClass cub, PostModel post) {
     return SizedBox(
-      height: MediaQuery.of(context).size.height/2,
+      height: MediaQuery.of(context).size.height / 2,
       child: ConditionalBuilder(
         condition: cub.fans.isNotEmpty,
         builder: (context) => SizedBox(
-          height: MediaQuery.of(context).size.height-150,
+          height: MediaQuery.of(context).size.height - 150,
           child: ListView.separated(
-              itemBuilder: (context, index) {
-                return InkWell(
-                  onTap: () async {
-                    List<PostModel> hisPosts = [];
-                    for(var e in cub.posts){
-                      if(e.uid == cub.fans[index].uid && !hisPosts.contains(e)){
-                        hisPosts.add(e);
-                      }
-                    }
-                    if(cub.fans[index].uid == cub.model.uid){
-                      Navigator.pop(context);
-
-                      cub.changBottomNavBarIndex(4);
-                    }else{
-                      navigatorTo(context, HisProfile(model: cub.fans[index], posts: hisPosts));
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(cub.fans[index].profilePhoto!),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(cub.fans[index].name! , style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),),
-                      ],
-                    ),
+            itemBuilder: (context, index) {
+              return InkWell(
+                onTap: () async {
+                  List<PostModel> hisPosts = cub.posts.where((e) => e.uid == cub.fans[index].uid).toList();
+                  if (cub.fans[index].uid == cub.model.uid) {
+                    Navigator.pop(context);
+                    cub.changBottomNavBarIndex(2);
+                  } else {
+                    navigatorTo(context, HisProfile(model: cub.fans[index], posts: hisPosts));
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(cub.fans[index].profilePhoto!),
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        cub.fans[index].name!,
+                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                );
-              },
-              separatorBuilder: (context, index) => const SizedBox(
-                height: 10,
-              ),
-              itemCount: cub.fans.length),
+                ),
+              );
+            },
+            separatorBuilder: (context, index) => const SizedBox(
+              height: 10,
+            ),
+            itemCount: cub.fans.length,
+          ),
         ),
         fallback: (context) => Center(
-          child :  Center (child : Column(
+          child: Column(
             children: [
               const Text('Nothing here yet'),
               Image.asset('assets/images/nothing.png'),
             ],
           ),
-          ),),
+        ),
       ),
     );
   }
@@ -216,8 +201,7 @@ class FirstScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(8.0),
               child: SizedBox(
                 width: double.infinity, // Full width of the card
-                height: MediaQuery.of(context).size.height /
-                    4, // Fixed height for the image
+                height: MediaQuery.of(context).size.height / 4, // Fixed height for the image
                 child: Image.network(
                   model.photo!,
                   fit: BoxFit.cover, // Adjust the image fit as needed
@@ -247,7 +231,7 @@ class FirstScreen extends StatelessWidget {
     );
   }
 
-  Widget _cardBottom(CubitClass cub, int index, PostModel model) {
+  Widget _cardBottom(CubitClass cub, PostModel model) {
     return Card(
       child: Row(
         children: [
@@ -282,5 +266,3 @@ class FirstScreen extends StatelessWidget {
     );
   }
 }
-
-

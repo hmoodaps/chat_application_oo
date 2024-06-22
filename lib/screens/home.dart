@@ -23,6 +23,7 @@ class _HomeState extends State<Home> {
 
     return Builder(
       builder: (context) {
+        cub.getPosts();
         return BlocConsumer<CubitClass, AppState>(
           listener: (context, state) {},
           builder: (context, state) {
@@ -81,7 +82,8 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                 ],
-                title: Shimmer.fromColors(baseColor: cub.isDark
+                title: Shimmer.fromColors(
+                  baseColor: cub.isDark
                       ? defaultPurpleColor
                       : const Color(0xFF40E0D0),
                   highlightColor: cub.isDark

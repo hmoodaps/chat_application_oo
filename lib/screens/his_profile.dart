@@ -36,7 +36,6 @@ class HisProfile extends StatelessWidget {
                   centerTitle: false,
                   leading: IconButton(onPressed: (){
                     Navigator.pop(context);
-                    Navigator.pop(context);
                   },
                     icon: const Icon(IconlyBroken.arrow_left),
                   ),

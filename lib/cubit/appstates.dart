@@ -140,8 +140,26 @@ class PostsLoadedFailed extends AppState {}
 class DeletePostSuccess extends AppState {}
 
 class GettingPostsSuccess extends AppState {}
+class DeletingPhoto extends AppState {}
+class ChatPhotoDeleted extends AppState {}
 
 class GettingPostsLoading extends AppState {}
+class ExplosionEffectState extends AppState {}
+class DeleteMessagesFromMySide extends AppState {}
+class DeleteMessagesFromBothSides extends AppState {}
+class StartRecording extends AppState {}
+class StopRecording extends AppState {}
+class AudioUploaded extends AppState {}
+class UploadAudioStarted extends AppState {}
+class DeleteOneMessageFromMySide extends AppState {}
+class DeleteOneMessageFromBothSides extends AppState {}
+class HideDeleteMsgButton extends AppState {}
+class ShowDeleteMsgButton extends AppState {}
+class RecordStarted extends AppState {}
+class ChatPhotoUploaded extends AppState {}
+class RecordStopped extends AppState {}
+class GetChatPhotoSuccess extends AppState {}
+class GetChatPhotoFailed extends AppState {}
 
 class PostCreated extends AppState {}
 

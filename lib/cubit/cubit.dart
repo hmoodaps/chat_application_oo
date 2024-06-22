@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:image_cropper/image_cropper.dart';
+
 import 'package:chat_application/components/components.dart';
 import 'package:chat_application/model/message_model.dart';
 import 'package:chat_application/model/model.dart';
@@ -9,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 import '../screens/chats.dart';
 import '../screens/firstscreen.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
@@ -46,7 +49,7 @@ class CubitClass extends Cubit<AppState> {
   }
 
   List<dynamic> screens = [
-   const  FirstScreen(),
+    const FirstScreen(),
     const Chats(),
     const Profile(),
   ];
@@ -109,10 +112,10 @@ class CubitClass extends Cubit<AppState> {
       );
       await _auth.signInWithCredential(credential).then((value) async {
         createUser(
-            FirebaseAuth.instance.currentUser!.email!,
-            FirebaseAuth.instance.currentUser!.displayName ?? 'New User',
-            context,
-            );
+          FirebaseAuth.instance.currentUser!.email!,
+          FirebaseAuth.instance.currentUser!.displayName ?? 'New User',
+          context,
+        );
         Navigator.pop(context);
         emit(LoggedInByGoogle(value: value));
       });
@@ -142,7 +145,7 @@ class CubitClass extends Cubit<AppState> {
         Navigator.pop(context);
         emit(SignInWithEmailAndPass(value: value));
       });
-      //Navigator.pop(context);
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'An error occurred';
       // التحقق من نوع الخطأ وتحديد الرسالة المناسبة
@@ -166,12 +169,12 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-  addUser(
-      {required context,
-      required String email,
-      required String pass,
-      required String name,
-      }) {
+  addUser({
+    required context,
+    required String email,
+    required String pass,
+    required String name,
+  }) {
     showDialog(
         context: context,
         builder: (context) => const Center(
@@ -234,8 +237,6 @@ class CubitClass extends Cubit<AppState> {
       emit(CreateUserError(e.toString()));
     }
   }
-
-
 
   //getting data from firebase
 
@@ -303,8 +304,8 @@ class CubitClass extends Cubit<AppState> {
   String? backgroundPhotoUrl;
 
   Future<void> uploadProfilePhoto(File? profilePhoto) async {
-    if (model.backgroundPhoto != null) {
-      await _deletePreviousPhoto(model.backgroundPhoto!);
+    if (model.profilePhoto != null) {
+      await _deletePreviousPhoto(model.profilePhoto!);
     }
     await FirebaseStorage.instance
         .ref(
@@ -380,6 +381,7 @@ class CubitClass extends Cubit<AppState> {
   List<UserModel> allUsers = [];
 
   getAllUsers() async {
+    allUsers.clear();
     await FirebaseFirestore.instance.collection('users').get().then((value) {
       for (var element in value.docs) {
         if (element.data()['uid'] != FirebaseAuth.instance.currentUser!.uid) {
@@ -392,23 +394,37 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
-  sendMessage({
+  Future<void> sendMessage({
     required String receiverUid,
     required String date,
-    required String message,
-  }) {
-    MessageModel messageModel = MessageModel(
-        date: DateTime.now().toString(),
-        message: message,
-        receiverUid: receiverUid,
-        senderUid: FirebaseAuth.instance.currentUser!.uid);
-    FirebaseFirestore.instance
+     String ?message,
+    String ? photo,
+    String ? audio
+  }) async{
+    var msgRef =FirebaseFirestore.instance
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .collection('chats')
         .doc(receiverUid)
         .collection('messages')
-        .add(messageModel.toMap())
+        .doc();
+    String msgId = msgRef.id;
+    MessageModel messageModel = MessageModel(
+        date: DateTime.now().toString(),
+        messageID: msgId,
+        photo: photo ?? '',
+        message: message ?? '',
+        showDelIcon: false,
+        receiverUid: receiverUid,
+        senderUid: FirebaseAuth.instance.currentUser!.uid);
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('chats')
+        .doc(receiverUid)
+        .collection('messages')
+        .doc(msgId)
+        .set(messageModel.toMap())
         .then((value) {
       emit(SendMessageSuccess());
     }).catchError((error) {
@@ -417,13 +433,14 @@ class CubitClass extends Cubit<AppState> {
         print(error.toString());
       }
     });
-    FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('users')
         .doc(receiverUid)
         .collection('chats')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .collection('messages')
-        .add(messageModel.toMap())
+        .doc(msgId)
+        .set(messageModel.toMap())
         .then((value) {
       emit(SendMessageSuccess());
     }).catchError((error) {
@@ -434,6 +451,32 @@ class CubitClass extends Cubit<AppState> {
     });
   }
 
+
+
+  void showDeleteMsgButton(MessageModel message) {
+    // إخفاء أيقونة الحذف لجميع الرسائل
+    for (var msg in messageModelList) {
+      msg.showDelIcon = false;
+    }
+
+    // إظهار أيقونة الحذف للرسالة المحددة
+    final index = messageModelList.indexOf(message);
+    if (index != -1) {
+      messageModelList[index].showDelIcon = true;
+      emit(ShowDeleteMsgButton());
+    }
+  }
+  void hideDeleteMsgButton() {
+    // إخفاء أيقونة الحذف لجميع الرسائل
+    for (var msg in messageModelList) {
+      msg.showDelIcon = false;
+    }
+    emit(HideDeleteMsgButton());
+
+  }
+
+
+
   List<MessageModel> messageModelList = [];
 
   getMessages(String receiverUid) {
@@ -443,16 +486,204 @@ class CubitClass extends Cubit<AppState> {
         .collection('chats')
         .doc(receiverUid)
         .collection('messages')
-        .orderBy('date',
-            descending: false) // ترتيب الرسائل حسب الوقت بشكل تصاعدي
+        .orderBy('date', descending: false) // ترتيب الرسائل حسب الوقت بشكل تصاعدي
         .snapshots()
         .listen((event) {
       messageModelList = [];
       for (var element in event.docs) {
         messageModelList.add(MessageModel.fromJson(element.data()));
       }
+      messageModelList.sort((a, b) => a.date!.compareTo(b.date!));
       emit(GetMessages());
     });
+  }
+
+  deleteMessagesFromMySide({required String hisId}) async {
+    try {
+      // احصل على جميع الرسائل من المحادثة
+      var messages = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('chats')
+          .doc(hisId)
+          .collection('messages')
+          .get();
+
+      // حذف كل رسالة بشكل متسلسل
+      for (var message in messages.docs) {
+        await message.reference.delete();
+      }
+
+      // بعد حذف جميع الرسائل، احذف مستند المحادثة
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('chats')
+          .doc(hisId)
+          .delete();
+
+      getMessages(hisId);
+      emit(DeleteMessagesFromMySide());
+    } catch (error) {
+      print('Error deleting messages from my side: $error');
+    }
+  }
+
+
+  deleteMessagesFromBothSides({required String hisId}) async {
+    try {
+      // احصل على جميع الرسائل من المحادثة في جانبي
+      var myMessages = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('chats')
+          .doc(hisId)
+          .collection('messages')
+          .get();
+
+      // احصل على جميع الرسائل من المحادثة في جانبه
+      var hisMessages = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(hisId)
+          .collection('chats')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('messages')
+          .get();
+
+      // حذف كل رسالة في جانبي بشكل متسلسل
+      for (var message in myMessages.docs) {
+        await message.reference.delete();
+      }
+
+      // حذف كل رسالة في جانبه بشكل متسلسل
+      for (var message in hisMessages.docs) {
+        await message.reference.delete();
+      }
+
+      // بعد حذف جميع الرسائل، احذف مستند المحادثة من كلا الجانبين
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('chats')
+          .doc(hisId)
+          .delete();
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(hisId)
+          .collection('chats')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .delete();
+
+      getMessages(hisId);
+      emit(DeleteMessagesFromBothSides());
+    } catch (error) {
+      print('Error deleting messages from both sides: $error');
+    }
+  }
+
+  Future <void> deleteOneMessageFromMySide({required String hisId, required String messageID}) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('chats')
+          .doc(hisId)
+          .collection('messages')
+          .doc(messageID)
+          .delete();
+      getMessages(hisId);
+      emit(DeleteOneMessageFromMySide());
+    } catch (error) {
+      print('Error deleting one message from my side: $error');
+    }
+  }
+
+  deleteOneMessageFromBothSides({required String hisId, required String messageID}) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('chats')
+          .doc(hisId)
+          .collection('messages')
+          .doc(messageID)
+          .delete();
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(hisId)
+          .collection('chats')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('messages')
+          .doc(messageID)
+          .delete();
+      getMessages(hisId);
+      emit(DeleteOneMessageFromBothSides());
+    } catch (error) {
+      print('Error deleting one message from both sides: $error');
+    }
+  }
+
+  String? chatPhotoUrl;
+  Future<void> uploadChatPhoto(File? chatPhoto) async {
+    emit(UploadPostPhoto());
+    await FirebaseStorage.instance
+        .ref(
+        'users/chatPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(chatPhoto!.path).pathSegments.last}')
+        .putFile(chatPhoto)
+        .then((value) {
+      value.ref.getDownloadURL().then((value) {
+        chatPhotoUrl = value;
+        emit(ChatPhotoUploaded());
+      }).catchError((error) {
+        if (kDebugMode) {
+          print(error);
+        }
+      });
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+  Future<void> deleteChatPhoto(File? chatPhoto) async {
+    emit(DeletingPhoto());
+    await FirebaseStorage.instance
+        .ref(
+        'users/chatPhotos/${FirebaseAuth.instance.currentUser!.uid}${Uri.file(chatPhoto!.path).pathSegments.last}')
+        .delete()
+        .then((value) {
+        chatPhotoUrl = null;
+        chatPhoto = null ;
+        emit(ChatPhotoDeleted());
+
+    }).catchError((error) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    });
+  }
+
+
+
+  File? chatPhoto;
+  Future<void> getChatPhoto(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    final image = await picker.pickImage(source: source);
+    if (image != null) {
+      chatPhoto = File(image.path);
+      chatPhoto = await cropImage(image: chatPhoto!);
+      emit(GetChatPhotoSuccess());
+    } else {
+      if (kDebugMode) {
+        print('No Image Selected');
+      }
+      emit(GetChatPhotoFailed());
+    }
+  }
+  Future<File ? >cropImage({required File image})async{
+    CroppedFile  ? croppedImage = await ImageCropper().cropImage(sourcePath: image.path);
+    return File(croppedImage!.path);
   }
 
 
@@ -476,12 +707,14 @@ class CubitClass extends Cubit<AppState> {
         photo: photo,
         text: text,
       );
-      await FirebaseFirestore.instance.collection('posts').doc(postId).set(postModel.toMap()).then((value)async{
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .set(postModel.toMap())
+          .then((value) async {
         emit(PostCreated());
-
       });
       emit(PostCreatedSuccessfully());
-
     } catch (error) {
       // إصدار حدث فشل الإنشاء مع تسجيل الخطأ
       if (kDebugMode) {
@@ -493,7 +726,6 @@ class CubitClass extends Cubit<AppState> {
       emit(CreatingPostLoadingDone());
     }
   }
-
 
   //delete post =======================================================================================
   deletePost(String postId) async {
@@ -553,7 +785,6 @@ class CubitClass extends Cubit<AppState> {
 
   //Image Picker==============
   File? postPhoto;
-
   Future<void> getPostPhoto() async {
     final ImagePicker picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
@@ -564,34 +795,35 @@ class CubitClass extends Cubit<AppState> {
       if (kDebugMode) {
         print('No Image Selected');
       }
-      emit(GetPostPhotoFailed());
+      emit(GetChatPhotoFailed());
     }
   }
 
   //getPosts ======================================================================================
   List<PostModel> posts = [];
-  List<PostModel> myPosts = [] ;
-  List<UserModel> fans = [];
+  List<PostModel> myPosts = [];
 
+  List<UserModel> fans = [];
 
   Future getPosts() async {
     posts.clear();
     getAllUsers();
     emit(GettingPostsLoading());
     try {
-       await FirebaseFirestore.instance.collection('posts').get().then((value){
-         for (var e in value.docs) {
-           PostModel  thisPost = PostModel.fromJson(e.data());
-           if(!posts.contains(thisPost))
-          {
-            posts.add(thisPost) ;
+      await FirebaseFirestore.instance.collection('posts').get().then((value) {
+        for (var e in value.docs) {
+          PostModel thisPost = PostModel.fromJson(e.data());
+          if (!posts.contains(thisPost)) {
+            posts.add(thisPost);
             updateLikes(thisPost.postId!);
           }
-         }
-         emit(GettingPostsSuccess());
-       });
-       getMyPosts();
-       emit(GettingPostsDone());
+        }
+        posts.sort((a, b) => a.dateTime!.compareTo(b.dateTime!));
+
+        emit(GettingPostsSuccess());
+      });
+      getMyPosts();
+      emit(GettingPostsDone());
     } catch (error) {
       emit(GettingPostsError());
       if (kDebugMode) {
@@ -599,22 +831,25 @@ class CubitClass extends Cubit<AppState> {
       }
     }
   }
+
   getMyPosts() async {
     myPosts.clear();
     emit(GettingMyPostsLoading());
     try {
-       await FirebaseFirestore.instance.collection('posts').get().then((value){
-         for (var e in value.docs) {
-           PostModel  thisPost = PostModel.fromJson(e.data());
-           if(!myPosts.contains(thisPost) && thisPost.uid==_auth.currentUser!.uid)
-          {
-            myPosts.add(thisPost) ;
+      await FirebaseFirestore.instance.collection('posts').get().then((value) {
+        for (var e in value.docs) {
+          PostModel thisPost = PostModel.fromJson(e.data());
+          if (!myPosts.contains(thisPost) &&
+              thisPost.uid == _auth.currentUser!.uid) {
+            myPosts.add(thisPost);
             updateLikes(thisPost.postId!);
           }
-         }
-         emit(GettingMyPostsSuccess());
-       });
-       emit(GettingMyPostsDone());
+        }
+        myPosts.sort((a, b) => b.dateTime!.compareTo(a.dateTime!));
+
+        emit(GettingMyPostsSuccess());
+      });
+      emit(GettingMyPostsDone());
     } catch (error) {
       emit(GettingPostsError());
       if (kDebugMode) {
@@ -680,7 +915,6 @@ class CubitClass extends Cubit<AppState> {
         myPosts[myPostIndex].likesUserIds = likedUserIds;
       }
 
-
       // إعلام التطبيق بنجاح التحديث
       emit(LikeSuccess());
     } catch (error) {
@@ -690,7 +924,9 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-  Future<bool> hasLiked(String postId, ) async {
+  Future<bool> hasLiked(
+    String postId,
+  ) async {
     try {
       var docSnapshot = await FirebaseFirestore.instance
           .collection('posts')
@@ -706,6 +942,7 @@ class CubitClass extends Cubit<AppState> {
       return false;
     }
   }
+
 //get posts fans =================================================================================
   Future<void> getFans(String postID) async {
     fans.clear();
@@ -728,12 +965,12 @@ class CubitClass extends Cubit<AppState> {
     }
   }
 
-
   //get user by uid ==========================================================
   Future<UserModel> getUserInfo(String userID) async {
     UserModel user;
     try {
-      DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
+      DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+          .instance
           .collection('users')
           .doc(userID)
           .get();
@@ -748,6 +985,39 @@ class CubitClass extends Cubit<AppState> {
     }
     return user;
   }
+
+//
+// final record  = AudioRecorder();
+// String path = '';
+// String url = '';
+// bool isRecording = false ;
+//   Future<void>  startRecording()async{
+//   final location = await getApplicationDocumentsDirectory();
+//   String name = const Uuid().v1();
+//   if(await record.hasPermission()){
+//     await record.start(const RecordConfig(), path: '${location.path}$name.m4a').then((value){
+//       isRecording = true ;
+//       emit(StartRecording());
+//     });
+//   }
+// }
+// Future<void> stopRecording()async{
+//  await record.stop().then((value){
+//     path = value ! ;
+//     isRecording = false ;
+//     emit(StopRecording());
+//   });
+//
+// }
+//   Future<void>  uploadAudio(String path)async{
+//   emit(UploadAudioStarted());
+//
+//   FirebaseStorage.instance.ref('voices/').putFile(File(path)).then((value) async {
+//     url = await value.ref.getDownloadURL();
+//     emit(AudioUploaded());
+//   }).catchError((e){});
+// }
+
 
 
 }

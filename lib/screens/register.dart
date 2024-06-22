@@ -298,7 +298,7 @@ class Register extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             imageButton(
-                                textColor: cub.isDark ? Colors.black : Colors.white,
+                                textColor:  Colors.black ,
                                 onPressed: () => cub.signInWithGoogle(context),
                                 imagePath: 'assets/images/google.png',
                               context: context
